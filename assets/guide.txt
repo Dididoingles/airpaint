@@ -1,0 +1,188 @@
+============================================================
+GUIA DE DESENVOLVIMENTO — AIRPAINT (DIDIDOINGLES)
+Projeto: AirPaint para aulas de inglês
+Repositório: https://github.com/dididoingles/airpaint
+Site: https://dididoingles.github.io/airpaint/
+============================================================
+
+Este guia define o que EVITAR sempre que possível e o que
+GARANTIR em todas as páginas. Cada página é um HTML único,
+autocontido, na raiz do repositório.
+
+
+------------------------------------------------------------
+1. O QUE EVITAR SEMPRE QUE POSSÍVEL
+------------------------------------------------------------
+
+1.1 NÃO usar layout desktop com scroll
+    - A experiência deve caber na viewport em desktop.
+    - Evite páginas longas com rolagem vertical desnecessária.
+    - Se o conteúdo for grande, use painéis com rolagem interna
+      (overflow-y: auto) em vez de empurrar a página inteira.
+    - O canvas de desenho e a câmera devem ocupar a tela sem
+      gerar scroll.
+
+1.2 NÃO usar Tailwind CSS
+    - O projeto usa CSS puro, escrito à mão, dentro do <style>
+      de cada página.
+    - Motivo: manter o arquivo único, sem build step, sem CDN
+      de framework e com controle total do visual.
+    - Reaproveite as variáveis de estilo e os componentes já
+      existentes (painel, toast, botões, badges).
+
+1.3 NÃO usar o mesmo CSS para mobile e desktop
+    - O ideal é dividir em media queries e ter o mesmo capricho
+      com ambos.
+    - Estrutura recomendada:
+        * Estilos base (mobile-first)
+        * @media (min-width: 768px)  -> tablet
+        * @media (min-width: 1024px) -> desktop
+    - Ajuste tamanhos de fonte, espaçamentos, posição do painel,
+      tamanho do preview da câmera e do canvas em cada breakpoint.
+    - Teste sempre nos dois cenários: tela pequena (celular) e
+      tela grande (desktop). Não entregue uma página "quebrada"
+      no mobile só porque funciona no desktop.
+
+
+------------------------------------------------------------
+2. O QUE GARANTIR EM TODAS AS PÁGINAS
+------------------------------------------------------------
+
+2.1 Favicon e metatags com link direto em TODAS as páginas
+    - Toda página deve ter, no <head>:
+
+      <!-- Favicon -->
+      <link rel="icon" type="image/png" href="/airpaint/faviair.png">
+      <link rel="apple-touch-icon" href="/airpaint/faviair.png">
+
+      <!-- SEO básico -->
+      <meta name="description" content="...">
+      <meta name="theme-color" content="#c20000">
+
+      <!-- Open Graph -->
+      <meta property="og:type" content="website">
+      <meta property="og:title" content="...">
+      <meta property="og:description" content="...">
+      <meta property="og:image" content="https://dididoingles.github.io/airpaint/metaair.png">
+      <meta property="og:url" content="https://dididoingles.github.io/airpaint/PAGINA.html">
+      <meta property="og:site_name" content="AirPaint">
+
+      <!-- Twitter Card -->
+      <meta name="twitter:card" content="summary_large_image">
+      <meta name="twitter:title" content="...">
+      <meta name="twitter:description" content="...">
+      <meta name="twitter:image" content="https://dididoingles.github.io/airpaint/metaair.png">
+
+    - Use caminhos absolutos a partir da raiz do repositório
+      (/airpaint/...) para evitar quebra em subdiretórios.
+    - metaair.png deve ter 1200x630 px (imagem de compartilhamento).
+    - faviair.png deve ser quadrado (ex.: 512x512 ou 192x192).
+
+2.2 Rodapé obrigatório em TODAS as páginas
+    - Toda página deve terminar com o rodapé:
+
+      <footer class="site-footer">
+        Desenvolvido pela professora
+        <a href="https://www.instagram.com/dicarvalho.prof" target="_blank" rel="noopener noreferrer">@dicarvalho.prof</a>
+      </footer>
+
+    - O link deve abrir em nova aba (target="_blank") e usar
+      rel="noopener noreferrer" por segurança.
+    - O rodapé deve ser discreto, mas sempre visível e legível.
+    - Sugestão de estilo (adaptar ao tema escuro):
+        .site-footer {
+          position: fixed;
+          bottom: 12px;
+          left: 50%;
+          transform: translateX(-50%);
+          font-size: 11px;
+          color: #737373;
+          z-index: 20;
+          text-align: center;
+        }
+        .site-footer a { color: #c20000; text-decoration: none; }
+        .site-footer a:hover { text-decoration: underline; }
+    - No mobile, cuidado para o rodapé não sobrepor o preview da
+      câmera nem o painel de controle. Ajuste a posição via media
+      query se necessário.
+
+2.3 Identidade visual consistente
+    - Fonte: Poppins (Google Fonts).
+    - Fundo: #0d0d0d.
+    - Cor de destaque: #c20000 (vermelho).
+    - Componentes reutilizáveis: painel com backdrop-filter,
+      toasts, badges de gesto, botões com hover vermelho.
+    - Mantenha o mesmo vocabulário visual entre as páginas para
+      que o aluno reconheça o ambiente.
+
+2.4 Navegação entre páginas
+    - Cada página deve ter um link de volta ao hub (index.html).
+    - No hub, cards com link para cada modo.
+    - Use caminhos relativos ou absolutos a partir da raiz do
+      repositório (/airpaint/...).
+
+2.5 Toggle EN/PT (quando houver rótulos)
+    - Como o app é para aulas de inglês, sempre que possível
+      ofereça um toggle EN/PT nos rótulos da interface.
+    - O objetivo é que o aluno aprenda os nomes das ferramentas
+      em inglês enquanto usa o app.
+
+2.6 Acessibilidade e clareza
+    - Contraste suficiente entre texto e fundo.
+    - Botões com área de toque confortável no mobile (mín. 44px).
+    - Textos alternativos em imagens e ícones relevantes.
+    - Feedback visual claro para cada ação (toast, cor da borda
+      da câmera, badge de modo).
+
+2.7 Performance e privacidade
+    - Carregue apenas as APIs necessárias para cada página
+      (Hands, Face Landmarker, SpeechRecognition).
+    - Evite scripts duplicados ou bibliotecas não usadas.
+    - Avise na UI quando o áudio for processado pelo navegador
+      (Web Speech API).
+    - Não colete dados pessoais sem necessidade.
+
+
+------------------------------------------------------------
+3. CHECKLIST ANTES DE PUBLICAR UMA PÁGINA
+------------------------------------------------------------
+
+[ ] O layout cabe na viewport em desktop, sem scroll vertical.
+[ ] O CSS está dividido em media queries (mobile / tablet / desktop).
+[ ] Não há Tailwind nem framework CSS externo.
+[ ] O <head> tem favicon, SEO, Open Graph e Twitter Card com
+    links diretos e absolutos (/airpaint/...).
+[ ] O rodapé "Desenvolvido pela professora @dicarvalho.prof"
+    está presente, com link para o Instagram, em nova aba.
+[ ] Há link de volta ao hub (index.html).
+[ ] Os rótulos têm toggle EN/PT (quando aplicável).
+[ ] Testado no celular e no desktop.
+[ ] Testado no GitHub Pages (caminhos absolutos corretos).
+
+
+------------------------------------------------------------
+4. ESTRUTURA DE ARQUIVOS NA RAIZ DO REPOSITÓRIO
+------------------------------------------------------------
+
+/airpaint/
+  index.html          -> hub de atividades
+  draw.html           -> desenho livre
+  emotion.html        -> detecção de emoções faciais
+  simon.html          -> Simon Says com gestos
+  speak.html          -> Speak & Draw (pronúncia + desenho)
+  flashcard.html      -> Flashcard Challenge
+  save.html           -> galeria / save & share
+  faviair.png         -> favicon
+  metaair.png         -> imagem de compartilhamento (1200x630)
+  GUIA-DEV.txt        -> este guia
+
+
+------------------------------------------------------------
+5. OBSERVAÇÃO FINAL
+------------------------------------------------------------
+
+Este guia é um contrato de qualidade do projeto. Sempre que
+uma nova página for criada ou uma existente for alterada,
+revise os itens acima. O objetivo é manter a experiência
+consistente, caprichada no mobile e no desktop, e com a
+identidade da professora @dicarvalho.prof sempre presente.
