@@ -1,0 +1,1215 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Favicon (URL absoluta, sem caminhos relativos) -->
+    <link rel="icon" type="image/png" href="https://dididoingles.github.io/airpaint/faviair.png">
+    <link rel="apple-touch-icon" href="https://dididoingles.github.io/airpaint/faviair.png">
+
+    <!-- SEO básico -->
+    <meta name="description" content="Desenhe no ar com gestos das mãos ou com o mouse e pratique inglês. Ferramenta gratuita do AirPaint para alunos da professora @dicarvalho.prof.">
+    <meta name="theme-color" content="#c20000">
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="AirPaint — Desenho Livre">
+    <meta property="og:description" content="Desenhe no ar com gestos das mãos e pratique inglês.">
+    <meta property="og:image" content="https://dididoingles.github.io/airpaint/metaair.png">
+    <meta property="og:url" content="https://dididoingles.github.io/airpaint/pages/desenholivre/">
+    <meta property="og:site_name" content="AirPaint">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="AirPaint — Desenho Livre">
+    <meta name="twitter:description" content="Desenhe no ar com gestos das mãos e pratique inglês.">
+    <meta name="twitter:image" content="https://dididoingles.github.io/airpaint/metaair.png">
+
+    <title>AirPaint — Desenho Livre</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Gochi+Hand&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer">
+
+    <!-- MediaPipe Hands -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --ink: #222222;
+            --paper: #ffffff;
+            --accent: #c20000;
+            --accent-dark: #a30000;
+            --muted: #666666;
+            --soft: #f7f7f7;
+            --shadow-hard-sm: 2px 3px 0 rgba(34, 34, 34, 0.85);
+            --shadow-hard: 3px 4px 0 rgba(34, 34, 34, 0.88);
+        }
+
+        html, body { width: 100%; height: 100%; overflow: hidden; }
+
+        body {
+            background-color: var(--paper);
+            font-family: 'Poppins', sans-serif;
+            letter-spacing: -0.05em;
+            color: var(--ink);
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* ============================================================
+           TOPBAR
+           ============================================================ */
+        .topbar {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 12px 16px;
+            z-index: 30;
+            background: rgba(255,255,255,0.86);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border-bottom: 1px solid rgba(34,34,34,0.06);
+            gap: 8px;
+        }
+        .brand { display: flex; align-items: center; gap: 8px; }
+        .brand-title {
+            font-weight: 700; font-size: 20px; line-height: 1;
+            color: var(--accent); letter-spacing: -0.05em;
+        }
+        .brand-title span { color: var(--ink); }
+        .brand-badge {
+            font-family: 'Gochi Hand', cursive;
+            letter-spacing: normal;
+            font-size: 12px;
+            color: var(--ink);
+            background: #fff5f5;
+            border: 1.5px solid var(--accent);
+            border-radius: 20px;
+            padding: 2px 8px;
+            transform: rotate(-3deg);
+        }
+        .topbar-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+
+        .mini-btn {
+            display: inline-flex; align-items: center; justify-content: center;
+            gap: 5px;
+            font-family: 'Gochi Hand', cursive;
+            letter-spacing: normal;
+            font-size: 13px;
+            color: var(--ink);
+            text-decoration: none;
+            background: var(--paper);
+            border: 1.5px solid var(--ink);
+            border-radius: 10px;
+            padding: 6px 10px;
+            cursor: pointer;
+            box-shadow: var(--shadow-hard-sm);
+            transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.2s ease;
+            min-height: 36px;
+        }
+        .mini-btn:hover {
+            background: #fff5f5;
+            transform: translate(1px, 1px);
+            box-shadow: 1px 2px 0 rgba(34,34,34,0.85);
+        }
+        .mini-btn:active {
+            transform: translate(3px, 3px);
+            box-shadow: 0 0 0 rgba(34,34,34,0.85);
+        }
+        .mini-btn i { font-size: 12px; }
+        .mini-btn.danger { background: var(--accent); color: #fff; border-color: var(--ink); }
+        .mini-btn.danger:hover { background: var(--accent-dark); }
+
+        /* ============================================================
+           CANVAS
+           ============================================================ */
+        #paintCanvas {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: 1;
+            display: block;
+            cursor: crosshair;
+            touch-action: none;
+        }
+        #paintCanvas.mode-gestures { cursor: default; }
+
+        /* ============================================================
+           PREVIEW DA WEBCAM
+           ============================================================ */
+        #webcamPreview {
+            position: fixed;
+            bottom: 56px;
+            right: 16px;
+            width: 120px;
+            height: 90px;
+            border-radius: 12px;
+            overflow: hidden;
+            background: #111;
+            border: 2px solid rgba(34,34,34,0.12);
+            z-index: 20;
+            transform: scaleX(-1);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+            transition: border-color 0.3s ease;
+        }
+        #webcamPreview.active-draw { border-color: var(--accent); }
+        #webcamPreview.active-erase { border-color: var(--ink); }
+        #webcamPreview.active-pause { border-color: rgba(34,34,34,0.12); }
+        #webcamPreview.hidden { display: none; }
+        #webcam { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+        /* ============================================================
+           PAINEL DE CONTROLE
+           ============================================================ */
+        #controlPanel {
+            position: fixed;
+            left: 12px; right: 12px; bottom: 12px;
+            z-index: 25;
+            background: rgba(255,255,255,0.96);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1.5px solid rgba(34,34,34,0.10);
+            border-radius: 16px;
+            padding: 12px;
+            box-shadow: 0 12px 32px rgba(0,0,0,0.10);
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            max-height: 48vh;
+            overflow-y: auto;
+        }
+
+        .control-group { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+        .control-group.full { grid-column: 1 / -1; }
+
+        .control-label {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.14em;
+            color: var(--muted);
+            font-weight: 600;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+
+        .color-row { display: flex; align-items: center; gap: 8px; }
+        input[type="color"] {
+            -webkit-appearance: none; appearance: none;
+            width: 36px; height: 36px;
+            background: transparent; border: none; cursor: pointer;
+            flex-shrink: 0;
+        }
+        input[type="color"]::-webkit-color-swatch {
+            border-radius: 8px; border: 2px solid var(--ink);
+        }
+        input[type="color"]::-moz-color-swatch {
+            border-radius: 8px; border: 2px solid var(--ink);
+        }
+        .color-presets { display: flex; gap: 6px; flex-wrap: wrap; }
+        .preset-btn {
+            width: 24px; height: 24px;
+            border-radius: 6px;
+            border: 1.5px solid rgba(34,34,34,0.15);
+            cursor: pointer;
+            transition: transform 0.15s ease, border-color 0.15s ease;
+            padding: 0;
+        }
+        .preset-btn:hover { transform: scale(1.1); border-color: var(--ink); }
+        .preset-btn.selected { border-color: var(--ink); border-width: 2px; }
+
+        /* Slider com track preenchido */
+        input[type="range"] {
+            -webkit-appearance: none; appearance: none;
+            width: 100%; height: 6px;
+            background: rgba(34,34,34,0.10);
+            border-radius: 3px; outline: none;
+            --progress: 21%;
+            background-image: linear-gradient(to right, var(--accent) 0%, var(--accent) var(--progress), transparent var(--progress));
+            background-repeat: no-repeat;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none; appearance: none;
+            width: 18px; height: 18px; border-radius: 50%;
+            background: var(--accent); cursor: pointer;
+            border: 2px solid var(--ink);
+        }
+        input[type="range"]::-moz-range-thumb {
+            width: 18px; height: 18px; border-radius: 50%;
+            background: var(--accent); cursor: pointer;
+            border: 2px solid var(--ink);
+        }
+
+        /* Toggle gestos/mouse */
+        .mode-toggle {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px;
+            background: rgba(34,34,34,0.06);
+            border-radius: 10px;
+            padding: 4px;
+        }
+        .mode-toggle button {
+            display: inline-flex; align-items: center; justify-content: center;
+            gap: 6px;
+            border: none;
+            background: transparent;
+            color: var(--muted);
+            font-family: 'Poppins', sans-serif;
+            font-weight: 600;
+            font-size: 12px;
+            letter-spacing: -0.02em;
+            padding: 8px 6px;
+            border-radius: 7px;
+            cursor: pointer;
+            transition: background 0.2s ease, color 0.2s ease;
+            min-height: 38px;
+        }
+        .mode-toggle button i { font-size: 13px; }
+        .mode-toggle button.active {
+            background: var(--paper);
+            color: var(--ink);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+        }
+        .mode-toggle button.active i { color: var(--accent); }
+
+        /* ============================================================
+           MODAIS
+           ============================================================ */
+        .modal-backdrop {
+            position: fixed; inset: 0;
+            background: rgba(20, 20, 20, 0.55);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            z-index: 100;
+            display: flex; align-items: center; justify-content: center;
+            padding: 20px;
+            opacity: 0; visibility: hidden;
+            transition: opacity 0.25s ease, visibility 0.25s ease;
+        }
+        .modal-backdrop.open { opacity: 1; visibility: visible; }
+
+        .modal {
+            background: var(--paper);
+            border: 2px solid var(--ink);
+            border-radius: 18px;
+            box-shadow: var(--shadow-hard);
+            width: 100%;
+            max-width: 460px;
+            padding: 24px 22px 20px;
+            transform: translateY(12px) scale(0.98);
+            transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+            max-height: 88vh;
+            overflow-y: auto;
+        }
+        .modal-backdrop.open .modal { transform: translateY(0) scale(1); }
+
+        .modal-icon {
+            width: 44px; height: 44px;
+            border-radius: 12px;
+            background: #fff5f5;
+            border: 1.5px solid var(--accent);
+            color: var(--accent);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 18px;
+            margin-bottom: 14px;
+        }
+        .modal h2 {
+            font-size: 20px;
+            font-weight: 700;
+            letter-spacing: -0.04em;
+            margin-bottom: 6px;
+        }
+        .modal p {
+            font-size: 13.5px;
+            line-height: 1.5;
+            color: #444;
+            margin-bottom: 16px;
+            letter-spacing: -0.02em;
+        }
+        .modal ul {
+            list-style: none;
+            display: flex; flex-direction: column;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .modal ul li {
+            display: flex; align-items: flex-start; gap: 10px;
+            font-size: 13px;
+            color: #333;
+            line-height: 1.45;
+            letter-spacing: -0.02em;
+        }
+        .modal ul li i {
+            color: var(--accent);
+            font-size: 13px;
+            margin-top: 3px;
+            flex-shrink: 0;
+            width: 16px;
+            text-align: center;
+        }
+        .modal-actions {
+            display: flex; gap: 10px; justify-content: flex-end;
+            flex-wrap: wrap;
+        }
+        .btn-primary, .btn-ghost {
+            display: inline-flex; align-items: center; justify-content: center;
+            gap: 6px;
+            font-family: 'Gochi Hand', cursive;
+            letter-spacing: normal;
+            font-size: 15px;
+            padding: 0 18px;
+            height: 42px;
+            border-radius: 10px;
+            cursor: pointer;
+            border: 2px solid var(--ink);
+            text-decoration: none;
+            min-height: 42px;
+        }
+        .btn-primary {
+            background: var(--accent);
+            color: #fff;
+            box-shadow: var(--shadow-hard-sm);
+            transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.2s ease;
+        }
+        .btn-primary:hover {
+            background: var(--accent-dark);
+            transform: translate(1px, 1px);
+            box-shadow: 1px 2px 0 rgba(34,34,34,0.85);
+        }
+        .btn-primary:active {
+            transform: translate(3px, 3px);
+            box-shadow: 0 0 0 rgba(34,34,34,0.85);
+        }
+        .btn-ghost {
+            background: var(--paper);
+            color: var(--ink);
+            transition: background 0.2s ease;
+        }
+        .btn-ghost:hover { background: #fff5f5; }
+
+        /* ============================================================
+           MODAL MOBILE (aviso fofo)
+           ============================================================ */
+        #mobileWarningModal { display: none; }
+        @media (max-width: 899px) {
+            #mobileWarningModal { display: flex; }
+        }
+
+        .mobile-warning-art {
+            display: flex; align-items: center; justify-content: center;
+            margin: 4px auto 14px;
+            width: 140px; height: 140px;
+            background: #fff5f5;
+            border: 2px dashed rgba(194, 0, 0, 0.35);
+            border-radius: 50%;
+            overflow: hidden;
+            position: relative;
+        }
+        .mobile-warning-art img {
+            width: 100%; height: 100%;
+            object-fit: contain;
+            display: block;
+        }
+        .mobile-warning-art .fallback {
+            font-size: 64px;
+            line-height: 1;
+        }
+        .mobile-warning-title {
+            text-align: center;
+            font-family: 'Gochi Hand', cursive;
+            letter-spacing: normal;
+            font-weight: 400;
+            font-size: 24px;
+            color: var(--ink);
+            margin-bottom: 6px;
+        }
+        .mobile-warning-title .accent { color: var(--accent); }
+        .mobile-warning-text {
+            text-align: center;
+            font-size: 13.5px;
+            line-height: 1.55;
+            color: #555;
+            margin-bottom: 18px;
+            letter-spacing: -0.02em;
+        }
+        .mobile-warning .modal-actions {
+            justify-content: center;
+        }
+        @media (max-width: 899px) {
+            .mobile-warning .modal-actions .btn-ghost,
+            .mobile-warning .modal-actions .btn-primary {
+                flex: 1 1 140px;
+            }
+        }
+
+        /* ============================================================
+           TOASTS
+           ============================================================ */
+        #toastContainer {
+            position: fixed;
+            top: 64px; right: 12px;
+            z-index: 60;
+            display: flex; flex-direction: column; gap: 8px;
+            pointer-events: none;
+        }
+        .toast {
+            background: #fff;
+            border: 1.5px solid rgba(34,34,34,0.10);
+            border-left: 4px solid var(--accent);
+            color: var(--ink);
+            padding: 10px 14px;
+            border-radius: 0 10px 10px 0;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.10);
+            font-size: 12px;
+            font-weight: 500;
+            display: flex; align-items: center; gap: 8px;
+            animation: toastIn 0.3s cubic-bezier(0.16,1,0.3,1) forwards;
+            max-width: 260px;
+        }
+        .toast i { color: var(--accent); font-size: 13px; }
+        @keyframes toastIn {
+            from { transform: translateX(120%); opacity: 0; }
+            to   { transform: translateX(0);    opacity: 1; }
+        }
+        @keyframes toastOut {
+            from { transform: translateX(0);    opacity: 1; }
+            to   { transform: translateX(120%); opacity: 0; }
+        }
+
+        /* ============================================================
+           LOADER
+           ============================================================ */
+        #loader {
+            position: fixed; inset: 0;
+            background: var(--paper);
+            z-index: 9999;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            gap: 18px;
+            transition: opacity 0.5s ease, visibility 0.5s;
+        }
+        /* Por padrão escondido: só aparece quando startCamera() é chamado */
+        #loader.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+        .spinner {
+            width: 40px; height: 40px; border-radius: 50%;
+            border: 3px solid rgba(194,0,0,0.15);
+            border-top-color: var(--accent);
+            animation: spin 0.9s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        #loader p {
+            font-family: 'Gochi Hand', cursive;
+            letter-spacing: normal;
+            font-size: 17px;
+            color: var(--ink);
+            opacity: 0.75;
+            text-align: center;
+            padding: 0 24px;
+        }
+
+        /* ============================================================
+           FOOTER
+           ============================================================ */
+        .site-footer {
+            position: fixed;
+            bottom: 4px; left: 50%;
+            transform: translateX(-50%);
+            z-index: 30;
+            font-size: 10px;
+            color: var(--muted);
+            text-align: center;
+            background: rgba(255,255,255,0.86);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            padding: 3px 12px;
+            border-radius: 20px;
+            border: 1px solid rgba(34,34,34,0.08);
+            white-space: nowrap;
+        }
+        .site-footer a { color: var(--accent); text-decoration: none; font-weight: 600; }
+        .site-footer a:hover { text-decoration: underline; }
+
+        /* ============================================================
+           TABLET
+           ============================================================ */
+        @media (min-width: 768px) {
+            .topbar { padding: 14px 24px; }
+            .brand-title { font-size: 22px; }
+            .mini-btn { min-height: 40px; font-size: 14px; padding: 7px 12px; }
+
+            #webcamPreview { width: 160px; height: 120px; bottom: 64px; right: 24px; }
+
+            #controlPanel {
+                left: 24px; right: auto; bottom: 24px;
+                width: 300px;
+                grid-template-columns: 1fr;
+                max-height: none;
+                padding: 16px;
+                border-radius: 18px;
+            }
+            .control-group.full { grid-column: auto; }
+
+            .site-footer { font-size: 11px; padding: 4px 16px; }
+        }
+
+        /* ============================================================
+           DESKTOP
+           ============================================================ */
+        @media (min-width: 1024px) {
+            .topbar { padding: 16px 60px; }
+            .brand-title { font-size: 26px; }
+            .brand-badge { font-size: 13px; }
+
+            #webcamPreview { width: 200px; height: 150px; bottom: 64px; right: 32px; }
+
+            #controlPanel {
+                left: 32px; bottom: 32px;
+                width: 320px;
+                padding: 20px;
+            }
+            .control-label { font-size: 11px; }
+            .preset-btn { width: 28px; height: 28px; }
+            input[type="color"] { width: 40px; height: 40px; }
+
+            .site-footer { font-size: 12px; bottom: 8px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Loader começa escondido; só aparece quando startCamera() for chamado -->
+    <div id="loader" class="hidden" aria-hidden="true">
+        <div class="spinner"></div>
+        <p id="loaderText">Preparando o pincel…</p>
+    </div>
+
+    <div id="toastContainer"></div>
+
+    <header class="topbar">
+        <div class="brand">
+            <span class="brand-title">Air<span>Paint</span></span>
+            <span class="brand-badge">draw</span>
+        </div>
+        <div class="topbar-actions">
+            <button class="mini-btn" id="langToggle" type="button" aria-label="Alternar idioma">
+                <i class="fa-solid fa-globe"></i>
+                <span id="langLabel">EN</span>
+            </button>
+            <button class="mini-btn" id="tutorialBtn" type="button" aria-label="Abrir tutorial">
+                <i class="fa-solid fa-circle-question"></i>
+                <span data-i18n="tutorial">Tutorial</span>
+            </button>
+            <button class="mini-btn" id="saveBtn" type="button">
+                <i class="fa-solid fa-download"></i>
+                <span data-i18n="save">Salvar</span>
+            </button>
+            <button class="mini-btn danger" id="clearBtn" type="button">
+                <i class="fa-solid fa-trash-can"></i>
+                <span data-i18n="clear">Limpar</span>
+            </button>
+            <a class="mini-btn" href="https://dididoingles.github.io/airpaint/">
+                <i class="fa-solid fa-arrow-left"></i>
+                <span data-i18n="back">Hub</span>
+            </a>
+        </div>
+    </header>
+
+    <canvas id="paintCanvas"></canvas>
+
+    <div id="webcamPreview" class="hidden">
+        <video id="webcam" autoplay playsinline muted></video>
+    </div>
+
+    <section id="controlPanel" aria-label="Controles">
+        <div class="control-group full">
+            <div class="control-label">
+                <span data-i18n="mode">Modo</span>
+            </div>
+            <div class="mode-toggle" role="tablist" aria-label="Modo de desenho">
+                <button type="button" id="modeGestures" class="active" role="tab" aria-selected="true">
+                    <i class="fa-solid fa-hand"></i>
+                    <span data-i18n="modeGestures">Gestos</span>
+                </button>
+                <button type="button" id="modeMouse" role="tab" aria-selected="false">
+                    <i class="fa-solid fa-computer-mouse"></i>
+                    <span data-i18n="modeMouse">Mouse</span>
+                </button>
+            </div>
+        </div>
+
+        <div class="control-group">
+            <div class="control-label">
+                <span data-i18n="color">Cor</span>
+            </div>
+            <div class="color-row">
+                <input type="color" id="brushColor" value="#c20000" aria-label="Cor do pincel">
+                <div class="color-presets">
+                    <button class="preset-btn selected" style="background:#c20000" data-color="#c20000" aria-label="Vermelho"></button>
+                    <button class="preset-btn" style="background:#222222" data-color="#222222" aria-label="Preto"></button>
+                    <button class="preset-btn" style="background:#2b6cff" data-color="#2b6cff" aria-label="Azul"></button>
+                    <button class="preset-btn" style="background:#00b3a4" data-color="#00b3a4" aria-label="Turquesa"></button>
+                    <button class="preset-btn" style="background:#22a06b" data-color="#22a06b" aria-label="Verde"></button>
+                    <button class="preset-btn" style="background:#ff8a00" data-color="#ff8a00" aria-label="Laranja"></button>
+                    <button class="preset-btn" style="background:#d63384" data-color="#d63384" aria-label="Rosa"></button>
+                    <button class="preset-btn" style="background:#8a5cf6" data-color="#8a5cf6" aria-label="Roxo"></button>
+                </div>
+            </div>
+        </div>
+
+        <div class="control-group">
+            <div class="control-label">
+                <span data-i18n="thickness">Espessura</span>
+                <span id="thicknessVal">8px</span>
+            </div>
+            <input type="range" id="brushThickness" min="2" max="30" value="8" aria-label="Espessura do pincel">
+        </div>
+    </section>
+
+    <footer class="site-footer">
+        Desenvolvido pela professora
+        <a href="https://www.instagram.com/dicarvalho.prof/" target="_blank" rel="noopener noreferrer">@dicarvalho.prof</a>
+    </footer>
+
+    <!-- Modal: aviso mobile -->
+    <div class="modal-backdrop" id="mobileWarningModal" role="dialog" aria-modal="true" aria-labelledby="mobileWarningTitle">
+        <div class="modal mobile-warning">
+            <div class="mobile-warning-art" id="mobileWarningArt">
+                <img src="https://dididoingles.github.io/airpaint/assets/triste.webp" alt="" onerror="this.style.display='none'; this.parentNode.querySelector('.fallback').style.display='block';">
+                <span class="fallback" style="display:none;"><i class="fa-regular fa-face-sad-tear" style="color:var(--accent);"></i></span>
+            </div>
+            <h2 class="mobile-warning-title" id="mobileWarningTitle" data-i18n="mobileTitle">Ops, o celular <span class="accent">não dá conta</span>…</h2>
+            <p class="mobile-warning-text" data-i18n="mobileBody">O AirPaint usa bastante memória para reconhecer as mãos. No celular ele pode travar ou ficar lento. Que tal abrir no computador para a experiência completa?</p>
+            <div class="modal-actions">
+                <a class="btn-ghost" href="https://dididoingles.github.io/airpaint/">
+                    <i class="fa-solid fa-arrow-left"></i>
+                    <span data-i18n="mobileBack">Voltar ao hub</span>
+                </a>
+                <button class="btn-primary" id="mobileContinue" type="button">
+                    <i class="fa-solid fa-forward"></i>
+                    <span data-i18n="mobileContinue">Continuar mesmo assim</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: permissão da câmera -->
+    <div class="modal-backdrop" id="cameraModal" role="dialog" aria-modal="true" aria-labelledby="cameraModalTitle">
+        <div class="modal">
+            <div class="modal-icon"><i class="fa-solid fa-camera"></i></div>
+            <h2 id="cameraModalTitle" data-i18n="camTitle">Permitir acesso à câmera?</h2>
+            <p data-i18n="camBody">Para desenhar com gestos, o AirPaint precisa acessar sua webcam. O vídeo é processado no seu navegador e não é enviado para nenhum servidor.</p>
+            <ul>
+                <li><i class="fa-solid fa-hand-pointer"></i><span data-i18n="camTip1">Levante o dedo indicador para desenhar.</span></li>
+                <li><i class="fa-solid fa-hand-fist"></i><span data-i18n="camTip2">Feche o punho para parar de desenhar.</span></li>
+                <li><i class="fa-solid fa-hand"></i><span data-i18n="camTip3">Palma aberta apaga o traço.</span></li>
+            </ul>
+            <div class="modal-actions">
+                <button class="btn-ghost" id="cameraCancel" type="button" data-i18n="camCancel">Agora não</button>
+                <button class="btn-primary" id="cameraAllow" type="button">
+                    <i class="fa-solid fa-video"></i>
+                    <span data-i18n="camAllow">Permitir câmera</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: tutorial -->
+    <div class="modal-backdrop" id="tutorialModal" role="dialog" aria-modal="true" aria-labelledby="tutorialModalTitle">
+        <div class="modal">
+            <div class="modal-icon"><i class="fa-solid fa-graduation-cap"></i></div>
+            <h2 id="tutorialModalTitle" data-i18n="tutTitle">Como usar o AirPaint</h2>
+            <p data-i18n="tutBody">Você pode desenhar de dois jeitos: com gestos das mãos ou com o mouse. Escolha o modo no painel de controle.</p>
+            <ul>
+                <li><i class="fa-solid fa-hand-pointer"></i><span data-i18n="tutDraw">1 dedo levantado: desenhar.</span></li>
+                <li><i class="fa-solid fa-hand-fist"></i><span data-i18n="tutPause">Punho fechado: parar de desenhar.</span></li>
+                <li><i class="fa-solid fa-hand"></i><span data-i18n="tutErase">Palma aberta: apagar.</span></li>
+                <li><i class="fa-solid fa-computer-mouse"></i><span data-i18n="tutMouse">No modo Mouse, clique e arraste para desenhar.</span></li>
+                <li><i class="fa-solid fa-download"></i><span data-i18n="tutSave">Use Salvar para baixar o desenho em PNG.</span></li>
+            </ul>
+            <div class="modal-actions">
+                <button class="btn-primary" id="tutorialClose" type="button">
+                    <i class="fa-solid fa-check"></i>
+                    <span data-i18n="tutClose">Entendi</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /* ============================================================
+           i18n
+           ============================================================ */
+        const I18N = {
+            pt: {
+                tutorial: 'Tutorial', save: 'Salvar', clear: 'Limpar', back: 'Hub',
+                mode: 'Modo', modeGestures: 'Gestos', modeMouse: 'Mouse',
+                color: 'Cor', thickness: 'Espessura',
+                saved: 'Desenho salvo!', cleared: 'Tela limpa!',
+                cameraError: 'Permissão da câmera negada ou não encontrada.',
+                cameraReady: 'Câmera pronta!',
+                loading: 'Preparando o pincel…',
+                camTitle: 'Permitir acesso à câmera?',
+                camBody: 'Para desenhar com gestos, o AirPaint precisa acessar sua webcam. O vídeo é processado no seu navegador e não é enviado para nenhum servidor.',
+                camTip1: 'Levante o dedo indicador para desenhar.',
+                camTip2: 'Feche o punho para parar de desenhar.',
+                camTip3: 'Palma aberta apaga o traço.',
+                camAllow: 'Permitir câmera',
+                camCancel: 'Agora não',
+                tutTitle: 'Como usar o AirPaint',
+                tutBody: 'Você pode desenhar de dois jeitos: com gestos das mãos ou com o mouse. Escolha o modo no painel de controle.',
+                tutDraw: '1 dedo levantado: desenhar.',
+                tutPause: 'Punho fechado: parar de desenhar.',
+                tutErase: 'Palma aberta: apagar.',
+                tutMouse: 'No modo Mouse, clique e arraste para desenhar.',
+                tutSave: 'Use Salvar para baixar o desenho em PNG.',
+                tutClose: 'Entendi',
+                mobileTitle: 'Ops, o celular não dá conta…',
+                mobileBody: 'O AirPaint usa bastante memória para reconhecer as mãos. No celular ele pode travar ou ficar lento. Que tal abrir no computador para a experiência completa?',
+                mobileBack: 'Voltar ao hub',
+                mobileContinue: 'Continuar mesmo assim',
+                lang: 'PT'
+            },
+            en: {
+                tutorial: 'Tutorial', save: 'Save', clear: 'Clear', back: 'Hub',
+                mode: 'Mode', modeGestures: 'Gestures', modeMouse: 'Mouse',
+                color: 'Color', thickness: 'Thickness',
+                saved: 'Drawing saved!', cleared: 'Canvas cleared!',
+                cameraError: 'Camera permission denied or not found.',
+                cameraReady: 'Camera ready!',
+                loading: 'Preparing the brush…',
+                camTitle: 'Allow camera access?',
+                camBody: 'To draw with gestures, AirPaint needs access to your webcam. The video is processed in your browser and is not sent to any server.',
+                camTip1: 'Raise your index finger to draw.',
+                camTip2: 'Close your fist to stop drawing.',
+                camTip3: 'Open palm erases the stroke.',
+                camAllow: 'Allow camera',
+                camCancel: 'Not now',
+                tutTitle: 'How to use AirPaint',
+                tutBody: 'You can draw in two ways: with hand gestures or with the mouse. Choose the mode in the control panel.',
+                tutDraw: '1 finger up: draw.',
+                tutPause: 'Closed fist: stop drawing.',
+                tutErase: 'Open palm: erase.',
+                tutMouse: 'In Mouse mode, click and drag to draw.',
+                tutSave: 'Use Save to download your drawing as PNG.',
+                tutClose: 'Got it',
+                mobileTitle: 'Oops, phones can’t quite handle it…',
+                mobileBody: 'AirPaint uses a lot of memory to recognise hands. On a phone it may freeze or get slow. How about opening it on a computer for the full experience?',
+                mobileBack: 'Back to hub',
+                mobileContinue: 'Continue anyway',
+                lang: 'EN'
+            }
+        };
+        let currentLang = 'pt';
+
+        function t(key) { return (I18N[currentLang] && I18N[currentLang][key]) || key; }
+
+        function applyLang(lang) {
+            currentLang = lang;
+            document.documentElement.lang = lang === 'pt' ? 'pt-BR' : 'en';
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                el.textContent = t(key);
+            });
+            const label = document.getElementById('langLabel');
+            if (label) label.textContent = I18N[lang].lang;
+        }
+
+        /* ============================================================
+           ELEMENTOS
+           ============================================================ */
+        const canvas = document.getElementById('paintCanvas');
+        const ctx = canvas.getContext('2d');
+        const video = document.getElementById('webcam');
+        const webcamPreview = document.getElementById('webcamPreview');
+        const loader = document.getElementById('loader');
+        const loaderText = document.getElementById('loaderText');
+        const toastContainer = document.getElementById('toastContainer');
+
+        const brushColorInput = document.getElementById('brushColor');
+        const brushThicknessInput = document.getElementById('brushThickness');
+        const thicknessVal = document.getElementById('thicknessVal');
+        const presetBtns = document.querySelectorAll('.preset-btn');
+        const clearBtn = document.getElementById('clearBtn');
+        const saveBtn = document.getElementById('saveBtn');
+        const langToggle = document.getElementById('langToggle');
+        const tutorialBtn = document.getElementById('tutorialBtn');
+        const tutorialModal = document.getElementById('tutorialModal');
+        const tutorialClose = document.getElementById('tutorialClose');
+        const cameraModal = document.getElementById('cameraModal');
+        const cameraAllow = document.getElementById('cameraAllow');
+        const cameraCancel = document.getElementById('cameraCancel');
+        const modeGesturesBtn = document.getElementById('modeGestures');
+        const modeMouseBtn = document.getElementById('modeMouse');
+        const mobileWarningModal = document.getElementById('mobileWarningModal');
+        const mobileContinue = document.getElementById('mobileContinue');
+
+        /* ============================================================
+           ESTADO
+           ============================================================ */
+        let lastX = null, lastY = null;
+        let currentMode = 'pause';
+        let currentColor = '#c20000';
+        let currentThickness = 8;
+        let loaderHidden = true; // começa escondido
+
+        let inputMode = 'gestures';
+        let cameraStarted = false;
+        let isDrawingMouse = false;
+        let mouseLastX = null, mouseLastY = null;
+
+        let hands = null;
+        let camera = null;
+
+        /* ============================================================
+           CANVAS RESIZE
+           ============================================================ */
+        function resizeCanvas() {
+            const dpr = Math.max(1, Math.min(window.devicePixelRatio || 1, 2));
+            const w = window.innerWidth;
+            const h = window.innerHeight;
+            const prev = document.createElement('canvas');
+            prev.width = canvas.width; prev.height = canvas.height;
+            prev.getContext('2d').drawImage(canvas, 0, 0);
+
+            canvas.width = Math.floor(w * dpr);
+            canvas.height = Math.floor(h * dpr);
+            canvas.style.width = w + 'px';
+            canvas.style.height = h + 'px';
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.drawImage(prev, 0, 0, prev.width, prev.height, 0, 0, w, h);
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        /* ============================================================
+           UI
+           ============================================================ */
+        function updateSliderFill() {
+            const min = parseFloat(brushThicknessInput.min);
+            const max = parseFloat(brushThicknessInput.max);
+            const val = parseFloat(brushThicknessInput.value);
+            const pct = ((val - min) / (max - min)) * 100;
+            brushThicknessInput.style.setProperty('--progress', pct + '%');
+        }
+
+        brushColorInput.addEventListener('input', e => {
+            currentColor = e.target.value;
+            presetBtns.forEach(b => b.classList.toggle('selected', b.dataset.color.toLowerCase() === currentColor.toLowerCase()));
+        });
+
+        brushThicknessInput.addEventListener('input', e => {
+            currentThickness = parseInt(e.target.value, 10);
+            thicknessVal.textContent = currentThickness + 'px';
+            updateSliderFill();
+        });
+        updateSliderFill();
+
+        presetBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const c = btn.dataset.color;
+                brushColorInput.value = c;
+                currentColor = c;
+                presetBtns.forEach(b => b.classList.toggle('selected', b === btn));
+            });
+        });
+
+        clearBtn.addEventListener('click', () => {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            showToast(t('cleared'));
+            lastX = lastY = null;
+        });
+
+        saveBtn.addEventListener('click', () => {
+            const exportCanvas = document.createElement('canvas');
+            exportCanvas.width = canvas.width;
+            exportCanvas.height = canvas.height;
+            const ectx = exportCanvas.getContext('2d');
+            ectx.fillStyle = '#ffffff';
+            ectx.fillRect(0, 0, exportCanvas.width, exportCanvas.height);
+            ectx.drawImage(canvas, 0, 0);
+
+            const dataURL = exportCanvas.toDataURL('image/png');
+            const a = document.createElement('a');
+            const ts = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+            a.href = dataURL;
+            a.download = `airpaint-${ts}.png`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            showToast(t('saved'));
+        });
+
+        langToggle.addEventListener('click', () => {
+            applyLang(currentLang === 'pt' ? 'en' : 'pt');
+        });
+
+        tutorialBtn.addEventListener('click', () => openModal(tutorialModal));
+        tutorialClose.addEventListener('click', () => closeModal(tutorialModal));
+        tutorialModal.addEventListener('click', e => { if (e.target === tutorialModal) closeModal(tutorialModal); });
+
+        /* ============================================================
+           TOAST
+           ============================================================ */
+        function showToast(message) {
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.innerHTML = `<i class="fa-solid fa-circle-check"></i><span>${message}</span>`;
+            toastContainer.appendChild(toast);
+            setTimeout(() => {
+                toast.style.animation = 'toastOut 0.3s cubic-bezier(0.16,1,0.3,1) forwards';
+                setTimeout(() => toast.remove(), 300);
+            }, 2000);
+        }
+
+        /* ============================================================
+           MODAIS
+           ============================================================ */
+        function openModal(el) {
+            el.classList.add('open');
+            document.body.style.overflow = 'hidden';
+        }
+        function closeModal(el) {
+            el.classList.remove('open');
+            document.body.style.overflow = '';
+        }
+
+        /* ============================================================
+           MODOS
+           ============================================================ */
+        function setInputMode(mode) {
+            inputMode = mode;
+            const isGestures = mode === 'gestures';
+            modeGesturesBtn.classList.toggle('active', isGestures);
+            modeMouseBtn.classList.toggle('active', !isGestures);
+            modeGesturesBtn.setAttribute('aria-selected', isGestures ? 'true' : 'false');
+            modeMouseBtn.setAttribute('aria-selected', !isGestures ? 'true' : 'false');
+
+            webcamPreview.classList.toggle('hidden', !isGestures);
+            canvas.classList.toggle('mode-gestures', isGestures);
+
+            if (!isGestures) {
+                lastX = lastY = null;
+                currentMode = 'pause';
+            }
+            if (isGestures && !cameraStarted) {
+                openModal(cameraModal);
+            }
+        }
+
+        modeGesturesBtn.addEventListener('click', () => setInputMode('gestures'));
+        modeMouseBtn.addEventListener('click', () => setInputMode('mouse'));
+
+        /* ============================================================
+           DESENHO COM MOUSE / TOUCH
+           ============================================================ */
+        function pointerPos(e) {
+            const rect = canvas.getBoundingClientRect();
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            return { x: clientX - rect.left, y: clientY - rect.top };
+        }
+
+        function startMouseDraw(e) {
+            if (inputMode !== 'mouse') return;
+            e.preventDefault();
+            isDrawingMouse = true;
+            const p = pointerPos(e);
+            mouseLastX = p.x;
+            mouseLastY = p.y;
+        }
+
+        function moveMouseDraw(e) {
+            if (inputMode !== 'mouse' || !isDrawingMouse) return;
+            e.preventDefault();
+            const p = pointerPos(e);
+            ctx.beginPath();
+            ctx.moveTo(mouseLastX, mouseLastY);
+            ctx.lineTo(p.x, p.y);
+            ctx.strokeStyle = currentColor;
+            ctx.lineWidth = currentThickness;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.stroke();
+            mouseLastX = p.x;
+            mouseLastY = p.y;
+        }
+
+        function endMouseDraw() {
+            isDrawingMouse = false;
+            mouseLastX = mouseLastY = null;
+        }
+
+        canvas.addEventListener('mousedown', startMouseDraw);
+        canvas.addEventListener('mousemove', moveMouseDraw);
+        window.addEventListener('mouseup', endMouseDraw);
+
+        canvas.addEventListener('touchstart', startMouseDraw, { passive: false });
+        canvas.addEventListener('touchmove', moveMouseDraw, { passive: false });
+        window.addEventListener('touchend', endMouseDraw);
+
+        /* ============================================================
+           MEDIAPIPE HANDS
+           ============================================================ */
+        function onResults(results) {
+            if (!loaderHidden) {
+                loaderHidden = true;
+                loader.classList.add('hidden');
+            }
+            if (inputMode !== 'gestures') return;
+
+            if (!results.multiHandLandmarks || results.multiHandLandmarks.length === 0) {
+                lastX = lastY = null;
+                return;
+            }
+
+            const lm = results.multiHandLandmarks[0];
+            const indexTip = lm[8],  indexDip = lm[6];
+            const middleTip = lm[12], middleDip = lm[10];
+            const ringTip = lm[16],  ringDip = lm[14];
+            const pinkyTip = lm[20], pinkyDip = lm[18];
+
+            const isIndex  = indexTip.y  < indexDip.y;
+            const isMiddle = middleTip.y < middleDip.y;
+            const isRing   = ringTip.y   < ringDip.y;
+            const isPinky  = pinkyTip.y  < pinkyDip.y;
+
+            const screenX = (1 - indexTip.x) * window.innerWidth;
+            const screenY = indexTip.y * window.innerHeight;
+
+            if (isIndex && !isMiddle && !isRing && !isPinky) {
+                currentMode = 'draw';
+                webcamPreview.classList.remove('active-erase', 'active-pause');
+                webcamPreview.classList.add('active-draw');
+
+                if (lastX !== null && lastY !== null) {
+                    ctx.beginPath();
+                    ctx.moveTo(lastX, lastY);
+                    ctx.lineTo(screenX, screenY);
+                    ctx.strokeStyle = currentColor;
+                    ctx.lineWidth = currentThickness;
+                    ctx.shadowBlur = currentThickness * 0.6;
+                    ctx.shadowColor = currentColor;
+                    ctx.stroke();
+                    ctx.shadowBlur = 0;
+                }
+                lastX = screenX;
+                lastY = screenY;
+
+            } else if (isIndex && isMiddle && isRing && isPinky) {
+                currentMode = 'erase';
+                webcamPreview.classList.remove('active-draw', 'active-pause');
+                webcamPreview.classList.add('active-erase');
+
+                const size = currentThickness * 5;
+                ctx.save();
+                ctx.shadowBlur = 0;
+                ctx.clearRect(screenX - size/2, screenY - size/2, size, size);
+                ctx.restore();
+                lastX = lastY = null;
+
+            } else {
+                currentMode = 'pause';
+                webcamPreview.classList.remove('active-draw', 'active-erase');
+                webcamPreview.classList.add('active-pause');
+                lastX = lastY = null;
+            }
+        }
+
+        /* ============================================================
+           INICIAR CÂMERA
+           ============================================================ */
+        function startCamera() {
+            if (cameraStarted) return;
+            cameraStarted = true;
+            webcamPreview.classList.remove('hidden');
+
+            // Só agora o loader aparece
+            loaderHidden = false;
+            loader.classList.remove('hidden');
+            loaderText.textContent = t('loading');
+
+            hands = new Hands({
+                locateFile: f => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${f}`
+            });
+            hands.setOptions({
+                maxNumHands: 1,
+                modelComplexity: 1,
+                minDetectionConfidence: 0.65,
+                minTrackingConfidence: 0.65
+            });
+            hands.onResults(onResults);
+
+            camera = new Camera(video, {
+                onFrame: async () => { await hands.send({ image: video }); },
+                width: 640,
+                height: 480
+            });
+
+            camera.start().catch(err => {
+                console.error('Erro ao abrir câmera:', err);
+                cameraStarted = false;
+                webcamPreview.classList.add('hidden');
+                loaderHidden = true;
+                loader.classList.add('hidden');
+                showToast(t('cameraError'));
+                setInputMode('mouse');
+            });
+        }
+
+        cameraAllow.addEventListener('click', () => {
+            closeModal(cameraModal);
+            startCamera();
+        });
+        cameraCancel.addEventListener('click', () => {
+            closeModal(cameraModal);
+            setInputMode('mouse');
+        });
+        cameraModal.addEventListener('click', e => {
+            if (e.target === cameraModal) {
+                closeModal(cameraModal);
+                setInputMode('mouse');
+            }
+        });
+
+        /* ============================================================
+           BOOT — aviso mobile é a PRIMEIRA coisa
+           ============================================================ */
+        applyLang('pt');
+
+        const isSmallScreen = window.matchMedia('(max-width: 899px)').matches;
+
+        if (isSmallScreen) {
+            // mobile: aviso primeiro, loader nunca aparece aqui
+            setInputMode('mouse'); // modo seguro por trás do aviso
+            openModal(mobileWarningModal);
+        } else {
+            // desktop: permissão da câmera primeiro, loader só depois
+            setInputMode('gestures');
+            openModal(cameraModal);
+        }
+
+        // mobile: continuar mesmo assim -> fecha aviso e pede câmera
+        mobileContinue.addEventListener('click', () => {
+            closeModal(mobileWarningModal);
+            setInputMode('gestures');
+            openModal(cameraModal);
+        });
+
+        // fallback loader (só se ele estiver visível)
+        setTimeout(() => {
+            if (!loaderHidden) {
+                loaderHidden = true;
+                loader.classList.add('hidden');
+            }
+        }, 8000);
+    </script>
+</body>
+</html>
