@@ -1,0 +1,1231 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Favicon (URL absoluta) -->
+    <link rel="icon" type="image/png" href="https://dididoingles.github.io/airpaint/faviair.png">
+    <link rel="apple-touch-icon" href="https://dididoingles.github.io/airpaint/faviair.png">
+
+    <!-- SEO básico -->
+    <meta name="description" content="Simon Says com gestos: siga comandos em inglês com o corpo e pratique imperativos e partes do corpo. Ferramenta gratuita do AirPaint para alunos da professora @dicarvalho.prof.">
+    <meta name="theme-color" content="#c20000">
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="AirPaint — Simon Says">
+    <meta property="og:description" content="Siga comandos em inglês com gestos e pratique o corpo.">
+    <meta property="og:image" content="https://dididoingles.github.io/airpaint/metaair.png">
+    <meta property="og:url" content="https://dididoingles.github.io/airpaint/pages/simon/">
+    <meta property="og:site_name" content="AirPaint">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="AirPaint — Simon Says">
+    <meta name="twitter:description" content="Siga comandos em inglês com gestos e pratique o corpo.">
+    <meta name="twitter:image" content="https://dididoingles.github.io/airpaint/metaair.png">
+
+    <title>AirPaint — Simon Says</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Gochi+Hand&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer">
+
+    <!-- MediaPipe Hands -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --ink: #222222;
+            --paper: #ffffff;
+            --accent: #c20000;
+            --accent-dark: #a30000;
+            --muted: #666666;
+            --shadow-hard-sm: 2px 3px 0 rgba(34, 34, 34, 0.85);
+            --shadow-hard: 3px 4px 0 rgba(34, 34, 34, 0.88);
+            --green: #1a8f4c;
+            --red: #c20000;
+        }
+
+        html, body { width: 100%; height: 100%; overflow: hidden; }
+
+        body {
+            background-color: var(--paper);
+            font-family: 'Poppins', sans-serif;
+            letter-spacing: -0.05em;
+            color: var(--ink);
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .topbar {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 12px 16px;
+            z-index: 30;
+            background: rgba(255,255,255,0.86);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border-bottom: 1px solid rgba(34,34,34,0.06);
+            gap: 8px;
+        }
+        .brand { display: flex; align-items: center; gap: 8px; }
+        .brand-title {
+            font-weight: 700; font-size: 20px; line-height: 1;
+            color: var(--accent); letter-spacing: -0.05em;
+        }
+        .brand-title span { color: var(--ink); }
+        .brand-badge {
+            font-family: 'Gochi Hand', cursive;
+            letter-spacing: normal;
+            font-size: 12px;
+            color: var(--ink);
+            background: #fff5f5;
+            border: 1.5px solid var(--accent);
+            border-radius: 20px;
+            padding: 2px 8px;
+            transform: rotate(-3deg);
+        }
+        .topbar-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+
+        .mini-btn {
+            display: inline-flex; align-items: center; justify-content: center;
+            gap: 5px;
+            font-family: 'Gochi Hand', cursive;
+            letter-spacing: normal;
+            font-size: 13px;
+            color: var(--ink);
+            text-decoration: none;
+            background: var(--paper);
+            border: 1.5px solid var(--ink);
+            border-radius: 10px;
+            padding: 6px 10px;
+            cursor: pointer;
+            box-shadow: var(--shadow-hard-sm);
+            transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.2s ease;
+            min-height: 36px;
+        }
+        .mini-btn:hover {
+            background: #fff5f5;
+            transform: translate(1px, 1px);
+            box-shadow: 1px 2px 0 rgba(34,34,34,0.85);
+        }
+        .mini-btn:active {
+            transform: translate(3px, 3px);
+            box-shadow: 0 0 0 rgba(34,34,34,0.85);
+        }
+        .mini-btn i { font-size: 12px; }
+
+        #stage {
+            position: fixed;
+            top: 56px; left: 0; right: 0; bottom: 0;
+            z-index: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            gap: 12px;
+            padding: 12px 16px 88px;
+            overflow-y: auto;
+        }
+
+        .game-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 14px;
+            width: 100%;
+            max-width: 620px;
+        }
+
+        .camera-col { display: flex; flex-direction: column; gap: 10px; align-items: stretch; }
+        .info-col { display: flex; flex-direction: column; gap: 12px; }
+
+        .game-hud {
+            display: flex; align-items: center; justify-content: space-between;
+            gap: 10px; flex-wrap: wrap;
+        }
+        .hud-group { display: flex; align-items: center; gap: 8px; }
+        .hud-chip {
+            display: inline-flex; align-items: center; gap: 6px;
+            background: #fff;
+            border: 1.5px solid var(--ink);
+            border-radius: 10px;
+            padding: 6px 12px;
+            font-family: 'Gochi Hand', cursive;
+            letter-spacing: normal;
+            font-size: 14px;
+            color: var(--ink);
+            box-shadow: var(--shadow-hard-sm);
+            white-space: nowrap;
+        }
+        .hud-chip i { font-size: 13px; color: var(--accent); }
+        .hud-chip.lives i { color: var(--red); }
+        .hud-chip.lives i.lost { color: rgba(34,34,34,0.2); }
+
+        .time-bar-wrap {
+            width: 100%; height: 10px;
+            background: rgba(34,34,34,0.08);
+            border-radius: 5px; overflow: hidden;
+            border: 1.5px solid var(--ink);
+        }
+        .time-bar-fill {
+            height: 100%; width: 100%;
+            background: var(--accent); border-radius: 5px;
+            transition: width 0.1s linear, background 0.2s ease;
+        }
+        .time-bar-fill.warning { background: #ff8a00; }
+        .time-bar-fill.danger { background: var(--red); }
+
+        .scanner-wrap {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 16 / 10;
+            max-height: 40vh;
+            border-radius: 20px;
+            background: #111;
+            overflow: hidden;
+            box-shadow: var(--shadow-hard);
+            border: 3px solid var(--ink);
+            isolation: isolate;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+        .scanner-wrap video {
+            width: 100%; height: 100%;
+            object-fit: cover;
+            transform: scaleX(-1);
+            display: block;
+        }
+        .scanner-grid {
+            position: absolute; inset: 0;
+            background-image:
+                linear-gradient(rgba(255,255,255,0.06) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.06) 1px, transparent 1px);
+            background-size: 24px 24px;
+            pointer-events: none;
+            mix-blend-mode: screen;
+            opacity: 0.7;
+        }
+        .scanner-corners span {
+            position: absolute;
+            width: 22px; height: 22px;
+            border: 3px solid #ffffff; border-radius: 4px;
+            opacity: 0.85; transition: border-color 0.3s ease; z-index: 3;
+        }
+        .scanner-corners span:nth-child(1) { top: 10px; left: 10px; border-right: none; border-bottom: none; }
+        .scanner-corners span:nth-child(2) { top: 10px; right: 10px; border-left: none; border-bottom: none; }
+        .scanner-corners span:nth-child(3) { bottom: 10px; left: 10px; border-right: none; border-top: none; }
+        .scanner-corners span:nth-child(4) { bottom: 10px; right: 10px; border-left: none; border-top: none; }
+        .scanner-line {
+            position: absolute; left: 0; right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, var(--accent), transparent);
+            box-shadow: 0 0 18px var(--accent), 0 0 6px #ffffff inset;
+            top: 0; z-index: 4;
+            animation: scanIdle 3.2s ease-in-out infinite;
+            opacity: 0.85;
+        }
+        @keyframes scanIdle {
+            0%   { top: 8%; opacity: 0.5; }
+            50%  { top: 88%; opacity: 1; }
+            100% { top: 8%; opacity: 0.5; }
+        }
+        .scanner-wrap.correct {
+            border-color: var(--green);
+            box-shadow: 0 0 0 3px var(--green), var(--shadow-hard);
+        }
+        .scanner-wrap.wrong {
+            border-color: var(--red);
+            box-shadow: 0 0 0 3px var(--red), var(--shadow-hard);
+        }
+        .scanner-wrap.correct .scanner-line,
+        .scanner-wrap.wrong .scanner-line { opacity: 0; }
+
+        .feedback-overlay {
+            position: absolute; inset: 0;
+            display: flex; align-items: center; justify-content: center;
+            z-index: 6; opacity: 0; pointer-events: none;
+            transition: opacity 0.2s ease;
+            font-family: 'Gochi Hand', cursive;
+            letter-spacing: normal;
+            font-size: clamp(28px, 6vw, 44px);
+            color: #fff;
+            text-shadow: 0 4px 12px rgba(0,0,0,0.5);
+        }
+        .feedback-overlay.show { opacity: 1; }
+        .feedback-overlay.correct { background: rgba(26, 143, 76, 0.35); }
+        .feedback-overlay.wrong { background: rgba(194, 0, 0, 0.35); }
+
+        .command-card {
+            width: 100%;
+            background: #fff5f5;
+            border: 2px dashed var(--accent);
+            border-radius: 16px;
+            padding: 18px 20px;
+            box-shadow: var(--shadow-hard-sm);
+            text-align: center;
+            display: none;
+            flex-direction: column;
+            gap: 8px;
+            align-items: center;
+            justify-content: center;
+        }
+        .command-card.show { display: flex; }
+        .command-kicker {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.24em;
+            color: var(--accent);
+            font-weight: 600;
+        }
+        /* Comando sempre em inglês, em destaque */
+        .command-text {
+            font-family: 'Gochi Hand', cursive;
+            letter-spacing: normal;
+            font-weight: 400;
+            font-size: clamp(24px, 4.8vw, 36px);
+            line-height: 1.15;
+            color: var(--ink);
+        }
+        .command-text .accent { color: var(--accent); }
+        /* Tradução só como apoio, discreta */
+        .command-translation {
+            font-size: 12px;
+            color: var(--muted);
+            letter-spacing: -0.02em;
+            font-style: italic;
+        }
+        .command-translation:empty { display: none; }
+
+        .gameover-card {
+            display: none;
+            width: 100%;
+            background: #fff;
+            border: 2px solid var(--ink);
+            border-radius: 18px;
+            box-shadow: var(--shadow-hard);
+            padding: 24px 20px;
+            text-align: center;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+        }
+        .gameover-card.show { display: flex; }
+        .gameover-card h2 {
+            font-family: 'Gochi Hand', cursive;
+            letter-spacing: normal;
+            font-weight: 400;
+            font-size: 28px;
+            color: var(--ink);
+        }
+        .gameover-score {
+            font-size: 42px; font-weight: 700;
+            letter-spacing: -0.05em; color: var(--accent); line-height: 1;
+        }
+        .gameover-label {
+            font-size: 12px; color: var(--muted);
+            text-transform: uppercase; letter-spacing: 0.14em;
+            font-weight: 600; margin-bottom: 4px;
+        }
+
+        .action-bar { display: flex; gap: 10px; flex-wrap: wrap; }
+        .action-btn {
+            flex: 1 1 auto;
+            display: inline-flex; align-items: center; justify-content: center;
+            gap: 8px;
+            font-family: 'Gochi Hand', cursive;
+            letter-spacing: normal;
+            font-size: 16px;
+            padding: 0 18px;
+            height: 50px;
+            border-radius: 10px;
+            border: 2px solid var(--ink);
+            cursor: pointer;
+            background: var(--paper);
+            color: var(--ink);
+            text-decoration: none;
+            box-shadow: var(--shadow-hard-sm);
+            transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.2s ease;
+            min-height: 50px;
+            white-space: nowrap;
+        }
+        .action-btn:hover {
+            background: #fff5f5;
+            transform: translate(1px, 1px);
+            box-shadow: 1px 2px 0 rgba(34,34,34,0.85);
+        }
+        .action-btn:active {
+            transform: translate(3px, 3px);
+            box-shadow: 0 0 0 rgba(34,34,34,0.85);
+        }
+        .action-btn.primary { background: var(--accent); color: #fff; }
+        .action-btn.primary:hover { background: var(--accent-dark); }
+        .action-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        .modal-backdrop {
+            position: fixed; inset: 0;
+            background: rgba(20, 20, 20, 0.55);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            z-index: 100;
+            display: flex; align-items: center; justify-content: center;
+            padding: 20px;
+            opacity: 0; visibility: hidden;
+            transition: opacity 0.25s ease, visibility 0.25s ease;
+        }
+        .modal-backdrop.open { opacity: 1; visibility: visible; }
+        .modal {
+            background: var(--paper);
+            border: 2px solid var(--ink);
+            border-radius: 18px;
+            box-shadow: var(--shadow-hard);
+            width: 100%; max-width: 440px;
+            padding: 24px 22px 20px;
+            transform: translateY(12px) scale(0.98);
+            transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+            max-height: 88vh; overflow-y: auto;
+        }
+        .modal-backdrop.open .modal { transform: translateY(0) scale(1); }
+
+        .modal-icon {
+            width: 44px; height: 44px;
+            border-radius: 12px;
+            background: #fff5f5;
+            border: 1.5px solid var(--accent);
+            color: var(--accent);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 18px; margin-bottom: 14px;
+        }
+        .modal h2 {
+            font-size: 20px; font-weight: 700;
+            letter-spacing: -0.04em; margin-bottom: 6px;
+        }
+        .modal p {
+            font-size: 13.5px; line-height: 1.5; color: #444;
+            margin-bottom: 16px; letter-spacing: -0.02em;
+        }
+        .modal ul {
+            list-style: none; display: flex; flex-direction: column;
+            gap: 10px; margin-bottom: 20px;
+        }
+        .modal ul li {
+            display: flex; align-items: flex-start; gap: 10px;
+            font-size: 13px; color: #333; line-height: 1.45;
+            letter-spacing: -0.02em;
+        }
+        .modal ul li i {
+            color: var(--accent); font-size: 13px;
+            margin-top: 3px; flex-shrink: 0; width: 16px; text-align: center;
+        }
+        .modal-actions {
+            display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap;
+        }
+        .btn-primary, .btn-ghost {
+            display: inline-flex; align-items: center; justify-content: center;
+            gap: 6px;
+            font-family: 'Gochi Hand', cursive;
+            letter-spacing: normal;
+            font-size: 15px;
+            padding: 0 18px; height: 42px;
+            border-radius: 10px; cursor: pointer;
+            border: 2px solid var(--ink);
+            text-decoration: none; min-height: 42px;
+        }
+        .btn-primary {
+            background: var(--accent); color: #fff;
+            box-shadow: var(--shadow-hard-sm);
+            transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.2s ease;
+        }
+        .btn-primary:hover {
+            background: var(--accent-dark);
+            transform: translate(1px, 1px);
+            box-shadow: 1px 2px 0 rgba(34,34,34,0.85);
+        }
+        .btn-primary:active {
+            transform: translate(3px, 3px);
+            box-shadow: 0 0 0 rgba(34,34,34,0.85);
+        }
+        .btn-ghost {
+            background: var(--paper); color: var(--ink);
+            transition: background 0.2s ease;
+        }
+        .btn-ghost:hover { background: #fff5f5; }
+
+        #mobileWarningModal { display: none; }
+        @media (max-width: 899px) { #mobileWarningModal { display: flex; } }
+
+        .mobile-warning-art {
+            display: flex; align-items: center; justify-content: center;
+            margin: 4px auto 14px;
+            width: 140px; height: 140px;
+            background: #fff5f5;
+            border: 2px dashed rgba(194, 0, 0, 0.35);
+            border-radius: 50%; overflow: hidden; position: relative;
+        }
+        .mobile-warning-art img { width: 100%; height: 100%; object-fit: contain; display: block; }
+        .mobile-warning-art .fallback { font-size: 64px; line-height: 1; }
+        .mobile-warning-title {
+            text-align: center;
+            font-family: 'Gochi Hand', cursive;
+            letter-spacing: normal; font-weight: 400;
+            font-size: 24px; color: var(--ink); margin-bottom: 6px;
+        }
+        .mobile-warning-title .accent { color: var(--accent); }
+        .mobile-warning-text {
+            text-align: center; font-size: 13.5px; line-height: 1.55;
+            color: #555; margin-bottom: 18px; letter-spacing: -0.02em;
+        }
+        .mobile-warning .modal-actions { justify-content: center; }
+        .mobile-warning .modal-actions .btn-primary { flex: 1 1 100%; max-width: 280px; }
+
+        #toastContainer {
+            position: fixed; top: 64px; right: 12px;
+            z-index: 60;
+            display: flex; flex-direction: column; gap: 8px;
+            pointer-events: none;
+        }
+        .toast {
+            background: #fff;
+            border: 1.5px solid rgba(34,34,34,0.10);
+            border-left: 4px solid var(--accent);
+            color: var(--ink);
+            padding: 10px 14px;
+            border-radius: 0 10px 10px 0;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.10);
+            font-size: 12px; font-weight: 500;
+            display: flex; align-items: center; gap: 8px;
+            animation: toastIn 0.3s cubic-bezier(0.16,1,0.3,1) forwards;
+            max-width: 260px;
+        }
+        .toast i { color: var(--accent); font-size: 13px; }
+        @keyframes toastIn {
+            from { transform: translateX(120%); opacity: 0; }
+            to   { transform: translateX(0);    opacity: 1; }
+        }
+        @keyframes toastOut {
+            from { transform: translateX(0);    opacity: 1; }
+            to   { transform: translateX(120%); opacity: 0; }
+        }
+
+        #loader {
+            position: fixed; inset: 0;
+            background: var(--paper);
+            z-index: 9999;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            gap: 18px;
+            transition: opacity 0.5s ease, visibility 0.5s;
+        }
+        #loader.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+        .spinner {
+            width: 40px; height: 40px; border-radius: 50%;
+            border: 3px solid rgba(194,0,0,0.15);
+            border-top-color: var(--accent);
+            animation: spin 0.9s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        #loader p {
+            font-family: 'Gochi Hand', cursive;
+            letter-spacing: normal; font-size: 17px;
+            color: var(--ink); opacity: 0.75;
+            text-align: center; padding: 0 24px;
+        }
+
+        .site-footer {
+            position: fixed;
+            bottom: 4px; left: 50%;
+            transform: translateX(-50%);
+            z-index: 30;
+            font-size: 10px;
+            color: var(--muted);
+            text-align: center;
+            background: rgba(255,255,255,0.86);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            padding: 3px 12px;
+            border-radius: 20px;
+            border: 1px solid rgba(34,34,34,0.08);
+            white-space: nowrap;
+        }
+        .site-footer a { color: var(--accent); text-decoration: none; font-weight: 600; }
+        .site-footer a:hover { text-decoration: underline; }
+
+        @media (min-width: 768px) {
+            .topbar { padding: 14px 24px; }
+            .brand-title { font-size: 22px; }
+            .mini-btn { min-height: 40px; font-size: 14px; padding: 7px 12px; }
+
+            #stage { top: 64px; padding: 16px 24px 24px; }
+
+            .game-grid {
+                grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+                gap: 20px;
+                max-width: 1100px;
+                align-items: start;
+            }
+
+            .scanner-wrap { max-height: 44vh; }
+            .command-card { padding: 26px 24px; }
+            .command-text { font-size: clamp(28px, 3.2vw, 38px); }
+
+            .site-footer { font-size: 11px; padding: 4px 16px; }
+        }
+
+        @media (min-width: 1024px) {
+            .topbar { padding: 16px 60px; }
+            .brand-title { font-size: 26px; }
+            .brand-badge { font-size: 13px; }
+
+            #stage { padding: 20px 60px 24px; }
+
+            .game-grid {
+                grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+                gap: 24px;
+                max-width: 1200px;
+            }
+
+            .scanner-wrap { max-height: 48vh; }
+            .command-text { font-size: 44px; }
+            .command-card { padding: 34px 28px; }
+
+            .site-footer { font-size: 12px; bottom: 8px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="loader" class="hidden" aria-hidden="true">
+        <div class="spinner"></div>
+        <p id="loaderText">Preparando a câmera…</p>
+    </div>
+
+    <div id="toastContainer"></div>
+
+    <header class="topbar">
+        <div class="brand">
+            <span class="brand-title">Air<span>Paint</span></span>
+            <span class="brand-badge">simon</span>
+        </div>
+        <div class="topbar-actions">
+            <button class="mini-btn" id="langToggle" type="button" aria-label="Alternar idioma">
+                <i class="fa-solid fa-globe"></i>
+                <span id="langLabel">EN</span>
+            </button>
+            <button class="mini-btn" id="tutorialBtn" type="button">
+                <i class="fa-solid fa-circle-question"></i>
+                <span data-i18n="tutorial">Tutorial</span>
+            </button>
+            <a class="mini-btn" href="https://dididoingles.github.io/airpaint/">
+                <i class="fa-solid fa-arrow-left"></i>
+                <span data-i18n="back">Hub</span>
+            </a>
+        </div>
+    </header>
+
+    <div id="stage">
+        <div class="game-grid">
+            <div class="camera-col">
+                <div class="game-hud">
+                    <div class="hud-group">
+                        <div class="hud-chip lives" id="livesChip">
+                            <i class="fa-solid fa-heart" data-life="1"></i>
+                            <i class="fa-solid fa-heart" data-life="2"></i>
+                            <i class="fa-solid fa-heart" data-life="3"></i>
+                        </div>
+                    </div>
+                    <div class="hud-group">
+                        <div class="hud-chip">
+                            <i class="fa-solid fa-star"></i>
+                            <span id="scoreValue">0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="time-bar-wrap">
+                    <div class="time-bar-fill" id="timeBarFill"></div>
+                </div>
+
+                <div class="scanner-wrap" id="scannerWrap">
+                    <video id="webcam" autoplay playsinline muted></video>
+                    <div class="scanner-grid"></div>
+                    <div class="scanner-corners"><span></span><span></span><span></span><span></span></div>
+                    <div class="scanner-line"></div>
+                    <div class="feedback-overlay" id="feedbackOverlay"></div>
+                </div>
+
+                <div class="action-bar">
+                    <button class="action-btn primary" id="startBtn" type="button">
+                        <i class="fa-solid fa-play"></i>
+                        <span data-i18n="startBtn">Começar</span>
+                    </button>
+                    <button class="action-btn" id="restartBtn" type="button" style="display:none;">
+                        <i class="fa-solid fa-rotate-right"></i>
+                        <span data-i18n="restartBtn">Jogar de novo</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="info-col">
+                <div class="command-card show" id="commandCard">
+                    <div class="command-kicker" data-i18n="commandKicker">Simon diz</div>
+                    <div class="command-text" id="commandText">Touch your nose</div>
+                    <div class="command-translation" id="commandTranslation">Toque no seu nariz</div>
+                </div>
+
+                <div class="gameover-card" id="gameoverCard">
+                    <h2 data-i18n="gameoverTitle">Fim de jogo!</h2>
+                    <div>
+                        <div class="gameover-label" data-i18n="gameoverScoreLabel">Sua pontuação</div>
+                        <div class="gameover-score" id="finalScore">0</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="site-footer">
+        Desenvolvido pela professora
+        <a href="https://www.instagram.com/dicarvalho.prof/" target="_blank" rel="noopener noreferrer">@dicarvalho.prof</a>
+    </footer>
+
+    <div class="modal-backdrop open" id="mobileWarningModal" role="dialog" aria-modal="true" aria-labelledby="mobileWarningTitle">
+        <div class="modal mobile-warning">
+            <div class="mobile-warning-art" id="mobileWarningArt">
+                <img src="https://dididoingles.github.io/airpaint/assets/triste.webp" alt="" onerror="this.style.display='none'; this.parentNode.querySelector('.fallback').style.display='block';">
+                <span class="fallback" style="display:none;"><i class="fa-regular fa-face-sad-tear" style="color:var(--accent);"></i></span>
+            </div>
+            <h2 class="mobile-warning-title" id="mobileWarningTitle" data-i18n="mobileTitle">Ops, o celular <span class="accent">não dá conta</span>…</h2>
+            <p class="mobile-warning-text" data-i18n="mobileBody">O AirPaint usa bastante memória para reconhecer os gestos. No celular ele pode travar ou ficar lento. Abra no computador para a experiência completa.</p>
+            <div class="modal-actions">
+                <a class="btn-primary" href="https://dididoingles.github.io/airpaint/">
+                    <i class="fa-solid fa-arrow-left"></i>
+                    <span data-i18n="mobileBack">Voltar ao hub</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-backdrop" id="cameraModal" role="dialog" aria-modal="true" aria-labelledby="cameraModalTitle">
+        <div class="modal">
+            <div class="modal-icon"><i class="fa-solid fa-camera"></i></div>
+            <h2 id="cameraModalTitle" data-i18n="camTitle">Permitir acesso à câmera?</h2>
+            <p data-i18n="camBody">Para o Simon Says funcionar, o AirPaint precisa acessar sua webcam. O vídeo é processado no seu navegador e não é enviado para nenhum servidor.</p>
+            <ul>
+                <li><i class="fa-solid fa-hand-pointer"></i><span data-i18n="camTip1">Use uma mão por vez, com a palma voltada para a câmera.</span></li>
+                <li><i class="fa-solid fa-lightbulb"></i><span data-i18n="camTip2">Mantenha a mão a uns 40 cm da câmera.</span></li>
+                <li><i class="fa-solid fa-clock"></i><span data-i18n="camTip3">Você tem 5 segundos para cada comando.</span></li>
+            </ul>
+            <div class="modal-actions">
+                <button class="btn-ghost" id="cameraCancel" type="button" data-i18n="camCancel">Agora não</button>
+                <button class="btn-primary" id="cameraAllow" type="button">
+                    <i class="fa-solid fa-video"></i>
+                    <span data-i18n="camAllow">Permitir câmera</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-backdrop" id="tutorialModal" role="dialog" aria-modal="true" aria-labelledby="tutorialModalTitle">
+        <div class="modal">
+            <div class="modal-icon"><i class="fa-solid fa-graduation-cap"></i></div>
+            <h2 id="tutorialModalTitle" data-i18n="tutTitle">Como jogar o Simon Says</h2>
+            <p data-i18n="tutBody">O Simon diz um comando em inglês e você tem 5 segundos para executá-lo com a mão. Cada acerto vale 1 ponto. Você começa com 3 vidas.</p>
+            <p data-i18n="tutLangNote" style="font-style:italic; color:var(--accent); font-size:12.5px;">O comando aparece sempre em inglês. A tradução abaixo é só um apoio.</p>
+            <ul>
+                <li><i class="fa-solid fa-hand-pointer"></i><span data-i18n="tutNose">Touch your nose: toque no nariz com o indicador.</span></li>
+                <li><i class="fa-solid fa-hand"></i><span data-i18n="tutHead">Put your hand on your head: mão no topo da cabeça.</span></li>
+                <li><i class="fa-solid fa-hand-fist"></i><span data-i18n="tutFist">Show me a fist: feche a mão.</span></li>
+                <li><i class="fa-solid fa-hand"></i><span data-i18n="tutPalm">Show me an open palm: abra a mão.</span></li>
+                <li><i class="fa-solid fa-hand-pointer"></i><span data-i18n="tutOne">Show me one finger: levante só o indicador.</span></li>
+                <li><i class="fa-solid fa-arrow-up"></i><span data-i18n="tutRaise">Raise your right / left hand: levante a mão indicada.</span></li>
+            </ul>
+            <div class="modal-actions">
+                <button class="btn-primary" id="tutorialClose" type="button">
+                    <i class="fa-solid fa-check"></i>
+                    <span data-i18n="tutClose">Entendi</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const isSmallScreen = window.matchMedia('(max-width: 899px)').matches;
+        const mobileWarningModal = document.getElementById('mobileWarningModal');
+
+        if (isSmallScreen) {
+            const observer = new MutationObserver(() => {
+                if (!mobileWarningModal.classList.contains('open')) {
+                    mobileWarningModal.classList.add('open');
+                }
+            });
+            observer.observe(mobileWarningModal, { attributes: true, attributeFilter: ['class'] });
+        }
+
+        const I18N = {
+            pt: {
+                tutorial: 'Tutorial', back: 'Hub',
+                commandKicker: 'Simon says',
+                startBtn: 'Começar', restartBtn: 'Jogar de novo',
+                gameoverTitle: 'Fim de jogo!', gameoverScoreLabel: 'Sua pontuação',
+                loading: 'Preparando a câmera…',
+                cameraError: 'Permissão da câmera negada ou não encontrada.',
+                camTitle: 'Permitir acesso à câmera?',
+                camBody: 'Para o Simon Says funcionar, o AirPaint precisa acessar sua webcam. O vídeo é processado no seu navegador e não é enviado para nenhum servidor.',
+                camTip1: 'Use uma mão por vez, com a palma voltada para a câmera.',
+                camTip2: 'Mantenha a mão a uns 40 cm da câmera.',
+                camTip3: 'Você tem 5 segundos para cada comando.',
+                camAllow: 'Permitir câmera', camCancel: 'Agora não',
+                tutTitle: 'Como jogar o Simon Says',
+                tutBody: 'O Simon diz um comando em inglês e você tem 5 segundos para executá-lo com a mão. Cada acerto vale 1 ponto. Você começa com 3 vidas.',
+                tutLangNote: 'O comando aparece sempre em inglês. A tradução abaixo é só um apoio.',
+                tutNose: 'Touch your nose: toque no nariz com o indicador.',
+                tutHead: 'Put your hand on your head: mão no topo da cabeça.',
+                tutFist: 'Show me a fist: feche a mão.',
+                tutPalm: 'Show me an open palm: abra a mão.',
+                tutOne: 'Show me one finger: levante só o indicador.',
+                tutRaise: 'Raise your right / left hand: levante a mão indicada.',
+                tutClose: 'Entendi',
+                mobileTitle: 'Ops, o celular não dá conta…',
+                mobileBody: 'O AirPaint usa bastante memória para reconhecer os gestos. No celular ele pode travar ou ficar lento. Abra no computador para a experiência completa.',
+                mobileBack: 'Voltar ao hub',
+                lang: 'PT',
+                correct: 'Acertou!', wrong: 'Errou!', timeup: 'Tempo!'
+            },
+            en: {
+                tutorial: 'Tutorial', back: 'Hub',
+                commandKicker: 'Simon says',
+                startBtn: 'Start', restartBtn: 'Play again',
+                gameoverTitle: 'Game over!', gameoverScoreLabel: 'Your score',
+                loading: 'Preparing the camera…',
+                cameraError: 'Camera permission denied or not found.',
+                camTitle: 'Allow camera access?',
+                camBody: 'For Simon Says to work, AirPaint needs access to your webcam. The video is processed in your browser and is not sent to any server.',
+                camTip1: 'Use one hand at a time, palm facing the camera.',
+                camTip2: 'Keep your hand about 40 cm from the camera.',
+                camTip3: 'You have 5 seconds for each command.',
+                camAllow: 'Allow camera', camCancel: 'Not now',
+                tutTitle: 'How to play Simon Says',
+                tutBody: 'Simon says a command in English and you have 5 seconds to do it with your hand. Each correct move scores 1 point. You start with 3 lives.',
+                tutLangNote: '',
+                tutNose: 'Touch your nose: touch your nose with your index finger.',
+                tutHead: 'Put your hand on your head: hand on top of your head.',
+                tutFist: 'Show me a fist: close your hand.',
+                tutPalm: 'Show me an open palm: open your hand.',
+                tutOne: 'Show me one finger: raise only your index finger.',
+                tutRaise: 'Raise your right / left hand: raise the given hand.',
+                tutClose: 'Got it',
+                mobileTitle: 'Oops, phones can’t quite handle it…',
+                mobileBody: 'AirPaint uses a lot of memory to recognise gestures. On a phone it may freeze or get slow. Open it on a computer for the full experience.',
+                mobileBack: 'Back to hub',
+                lang: 'EN',
+                correct: 'Correct!', wrong: 'Wrong!', timeup: 'Time!'
+            }
+        };
+        let currentLang = 'pt';
+        function t(key) { return (I18N[currentLang] && I18N[currentLang][key]) || key; }
+
+        function applyLang(lang) {
+            currentLang = lang;
+            document.documentElement.lang = lang === 'pt' ? 'pt-BR' : 'en';
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                el.textContent = t(key);
+            });
+            const label = document.getElementById('langLabel');
+            if (label) label.textContent = I18N[lang].lang;
+            if (loaderText && loader && !loader.classList.contains('hidden')) {
+                loaderText.textContent = t('loading');
+            }
+            // Reaplica o comando atual SEMPRE em inglês, com tradução só se PT
+            if (currentCommand) {
+                renderCommand(currentCommand);
+            }
+        }
+
+        /* Renderiza o comando: inglês sempre, tradução só em PT */
+        function renderCommand(cmd) {
+            commandText.textContent = cmd.en;
+            commandTranslation.textContent = currentLang === 'pt' ? cmd.pt : '';
+        }
+
+        const video = document.getElementById('webcam');
+        const scannerWrap = document.getElementById('scannerWrap');
+        const feedbackOverlay = document.getElementById('feedbackOverlay');
+        const commandCard = document.getElementById('commandCard');
+        const commandText = document.getElementById('commandText');
+        const commandTranslation = document.getElementById('commandTranslation');
+        const gameoverCard = document.getElementById('gameoverCard');
+        const finalScore = document.getElementById('finalScore');
+        const timeBarFill = document.getElementById('timeBarFill');
+        const scoreValue = document.getElementById('scoreValue');
+        const livesChip = document.getElementById('livesChip');
+        const startBtn = document.getElementById('startBtn');
+        const restartBtn = document.getElementById('restartBtn');
+        const loader = document.getElementById('loader');
+        const loaderText = document.getElementById('loaderText');
+        const toastContainer = document.getElementById('toastContainer');
+
+        const langToggle = document.getElementById('langToggle');
+        const tutorialBtn = document.getElementById('tutorialBtn');
+        const tutorialModal = document.getElementById('tutorialModal');
+        const tutorialClose = document.getElementById('tutorialClose');
+        const cameraModal = document.getElementById('cameraModal');
+        const cameraAllow = document.getElementById('cameraAllow');
+        const cameraCancel = document.getElementById('cameraCancel');
+
+        const COMMANDS = [
+            { id: 'nose',        en: 'Touch your nose',             pt: 'Toque no seu nariz',              validator: 'nose' },
+            { id: 'head',        en: 'Put your hand on your head',  pt: 'Coloque a mão na sua cabeça',      validator: 'head' },
+            { id: 'fist',        en: 'Show me a fist',              pt: 'Mostre um punho fechado',          validator: 'fist' },
+            { id: 'palm',        en: 'Show me an open palm',        pt: 'Mostre a palma aberta',            validator: 'palm' },
+            { id: 'one',         en: 'Show me one finger',          pt: 'Mostre um dedo',                   validator: 'one' },
+            { id: 'right',       en: 'Raise your right hand',       pt: 'Levante a mão direita',            validator: 'raiseRight' },
+            { id: 'left',        en: 'Raise your left hand',        pt: 'Levante a mão esquerda',           validator: 'raiseLeft' },
+            { id: 'touch_ear',   en: 'Touch your ear',              pt: 'Toque na sua orelha',              validator: 'touchEar' },
+            { id: 'touch_chin',  en: 'Touch your chin',             pt: 'Toque no seu queixo',              validator: 'touchChin' },
+            { id: 'touch_mouth', en: 'Touch your mouth',            pt: 'Toque na sua boca',                validator: 'touchMouth' },
+            { id: 'touch_eye',   en: 'Touch your eye',              pt: 'Toque no seu olho',                validator: 'touchEye' },
+            { id: 'touch_hair',  en: 'Touch your hair',             pt: 'Toque no seu cabelo',              validator: 'touchHair' },
+            { id: 'two',         en: 'Show me two fingers',         pt: 'Mostre dois dedos',                validator: 'two' },
+            { id: 'three',       en: 'Show me three fingers',       pt: 'Mostre três dedos',                validator: 'three' },
+            { id: 'four',        en: 'Show me four fingers',        pt: 'Mostre quatro dedos',              validator: 'four' },
+            { id: 'five',        en: 'Show me five fingers',        pt: 'Mostre cinco dedos',               validator: 'five' },
+            { id: 'peace',       en: 'Make a peace sign',           pt: 'Faça um sinal de paz',             validator: 'peace' },
+            { id: 'thumbs_up',   en: 'Show me a thumbs up',         pt: 'Mostre um joia',                   validator: 'thumbsUp' },
+            { id: 'ok',          en: 'Make an OK sign',             pt: 'Faça um sinal de OK',              validator: 'okSign' },
+            { id: 'pinch',       en: 'Pinch with two fingers',      pt: 'Faça um beliscão com dois dedos',  validator: 'pinch' },
+            { id: 'wave',        en: 'Wave your hand',              pt: 'Acene com a mão',                  validator: 'wave' },
+            { id: 'high_five',   en: 'Give me a high five',         pt: 'Bata um high five',                validator: 'highFive' },
+            { id: 'open_close',  en: 'Open and close your hand',    pt: 'Abra e feche a mão',               validator: 'openClose' },
+            { id: 'raise_both',  en: 'Raise both hands',            pt: 'Levante as duas mãos',             validator: 'raiseBoth' },
+            { id: 'raise_up',    en: 'Raise your hand up high',     pt: 'Levante a mão bem alto',           validator: 'raiseUpHigh' },
+            { id: 'show_back',   en: 'Show me the back of your hand', pt: 'Mostre as costas da mão',        validator: 'backOfHand' },
+            { id: 'show_side',   en: 'Show me the side of your hand', pt: 'Mostre a lateral da mão',        validator: 'sideOfHand' },
+            { id: 'show_thumb',  en: 'Show me your thumb',          pt: 'Mostre o seu polegar',             validator: 'thumbOnly' },
+            { id: 'show_pinky',  en: 'Show me your pinky',          pt: 'Mostre o seu dedinho',             validator: 'pinkyOnly' },
+            { id: 'move_left',   en: 'Move your hand to the left',  pt: 'Mova a mão para a esquerda',       validator: 'moveLeft' },
+            { id: 'move_right',  en: 'Move your hand to the right', pt: 'Mova a mão para a direita',        validator: 'moveRight' }
+        ];
+
+        const GAME_TIME_MS = 5000;
+        let lives = 3;
+        let score = 0;
+        let currentCommand = null;
+        let gameState = 'idle';
+        let commandStartTime = 0;
+        let lastTickTime = 0;
+        let feedbackTimer = null;
+        let nextCommandTimer = null;
+        let stableCount = 0;
+        let rafId = null;
+        let lastMoveX = null;
+
+        function showToast(message) {
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.innerHTML = `<i class="fa-solid fa-circle-info"></i><span>${message}</span>`;
+            toastContainer.appendChild(toast);
+            setTimeout(() => {
+                toast.style.animation = 'toastOut 0.3s cubic-bezier(0.16,1,0.3,1) forwards';
+                setTimeout(() => toast.remove(), 300);
+            }, 2000);
+        }
+
+        function openModal(el) { el.classList.add('open'); }
+        function closeModal(el) { el.classList.remove('open'); }
+
+        function updateLivesUI() {
+            const hearts = livesChip.querySelectorAll('i');
+            hearts.forEach((h, i) => h.classList.toggle('lost', i >= lives));
+        }
+        function updateScoreUI() { scoreValue.textContent = score; }
+        function updateTimerUI(remainingMs) {
+            const pct = Math.max(0, Math.min(100, (remainingMs / GAME_TIME_MS) * 100));
+            timeBarFill.style.width = pct + '%';
+            timeBarFill.classList.toggle('warning', pct <= 50 && pct > 25);
+            timeBarFill.classList.toggle('danger', pct <= 25);
+        }
+
+        function showFeedback(type, text) {
+            feedbackOverlay.className = 'feedback-overlay show ' + type;
+            feedbackOverlay.textContent = text;
+            scannerWrap.classList.remove('correct', 'wrong');
+            scannerWrap.classList.add(type);
+            clearTimeout(feedbackTimer);
+            feedbackTimer = setTimeout(() => {
+                feedbackOverlay.classList.remove('show');
+                scannerWrap.classList.remove('correct', 'wrong');
+            }, 700);
+        }
+
+        function tick() {
+            if (gameState === 'gameover' || gameState === 'idle') {
+                rafId = null;
+                return;
+            }
+
+            if (gameState === 'playing' && currentCommand) {
+                const now = performance.now();
+                const elapsed = now - commandStartTime;
+                const remaining = GAME_TIME_MS - elapsed;
+
+                if (now - lastTickTime > 50) {
+                    lastTickTime = now;
+                    updateTimerUI(remaining);
+                }
+
+                if (remaining <= 0) {
+                    loseLife('timeup');
+                }
+            }
+
+            rafId = requestAnimationFrame(tick);
+        }
+
+        function startGame() {
+            clearTimeout(nextCommandTimer);
+            clearTimeout(feedbackTimer);
+
+            lives = 3;
+            score = 0;
+            updateLivesUI();
+            updateScoreUI();
+            gameoverCard.classList.remove('show');
+            restartBtn.style.display = 'none';
+            startBtn.style.display = 'inline-flex';
+            startBtn.disabled = true;
+            gameState = 'playing';
+            commandCard.classList.add('show');
+            nextCommand();
+
+            if (rafId === null) {
+                rafId = requestAnimationFrame(tick);
+            }
+        }
+
+        function nextCommand() {
+            if (gameState === 'gameover' || gameState === 'idle') return;
+
+            let next;
+            do {
+                next = COMMANDS[Math.floor(Math.random() * COMMANDS.length)];
+            } while (currentCommand && next.id === currentCommand.id && COMMANDS.length > 1);
+
+            currentCommand = next;
+            renderCommand(next);
+            commandCard.classList.add('show');
+
+            commandStartTime = performance.now();
+            lastTickTime = commandStartTime;
+            stableCount = 0;
+            lastMoveX = null;
+            updateTimerUI(GAME_TIME_MS);
+
+            gameState = 'playing';
+        }
+
+        function winRound() {
+            if (gameState !== 'playing') return;
+            gameState = 'feedback';
+            score++;
+            updateScoreUI();
+            showFeedback('correct', t('correct'));
+            clearTimeout(nextCommandTimer);
+            nextCommandTimer = setTimeout(nextCommand, 900);
+        }
+
+        function loseLife(reason) {
+            if (gameState !== 'playing') return;
+            gameState = 'feedback';
+            lives--;
+            updateLivesUI();
+            showFeedback('wrong', reason === 'timeup' ? t('timeup') : t('wrong'));
+
+            clearTimeout(nextCommandTimer);
+            if (lives <= 0) {
+                nextCommandTimer = setTimeout(() => endGame(), 900);
+            } else {
+                nextCommandTimer = setTimeout(nextCommand, 900);
+            }
+        }
+
+        function endGame() {
+            gameState = 'gameover';
+            commandCard.classList.remove('show');
+            gameoverCard.classList.add('show');
+            finalScore.textContent = score;
+            startBtn.style.display = 'none';
+            restartBtn.style.display = 'inline-flex';
+            startBtn.disabled = false;
+            updateTimerUI(0);
+        }
+
+        function dist(a, b) {
+            const dx = a.x - b.x, dy = a.y - b.y;
+            return Math.sqrt(dx*dx + dy*dy);
+        }
+        function fingersExtended(lm) {
+            const index  = lm[8].y  < lm[6].y;
+            const middle = lm[12].y < lm[10].y;
+            const ring   = lm[16].y < lm[14].y;
+            const pinky  = lm[20].y < lm[18].y;
+            const thumb  = Math.abs(lm[4].x - lm[0].x) > Math.abs(lm[3].x - lm[0].x);
+            return { thumb, index, middle, ring, pinky };
+        }
+        function countExtended(lm) {
+            const f = fingersExtended(lm);
+            return [f.thumb, f.index, f.middle, f.ring, f.pinky].filter(Boolean).length;
+        }
+
+        const VALIDATORS = {
+            nose:      lm => dist(lm[8], lm[0]) < 0.08,
+            head:      lm => lm[0].y < lm[1].y - 0.05,
+            fist:      lm => { const f = fingersExtended(lm); return !f.index && !f.middle && !f.ring && !f.pinky; },
+            palm:      lm => { const f = fingersExtended(lm); return f.index && f.middle && f.ring && f.pinky; },
+            one:       lm => { const f = fingersExtended(lm); return f.index && !f.middle && !f.ring && !f.pinky; },
+            two:       lm => { const f = fingersExtended(lm); return f.index && f.middle && !f.ring && !f.pinky; },
+            three:     lm => { const f = fingersExtended(lm); return f.index && f.middle && f.ring && !f.pinky; },
+            four:      lm => { const f = fingersExtended(lm); return f.index && f.middle && f.ring && f.pinky && !f.thumb; },
+            five:      lm => countExtended(lm) === 5,
+            peace:     lm => { const f = fingersExtended(lm); return f.index && f.middle && !f.ring && !f.pinky; },
+            thumbsUp:  lm => {
+                const f = fingersExtended(lm);
+                return f.thumb && !f.index && !f.middle && !f.ring && !f.pinky && lm[4].y < lm[3].y;
+            },
+            okSign:    lm => dist(lm[4], lm[8]) < 0.06 && lm[12].y < lm[10].y && lm[16].y < lm[14].y,
+            pinch:     lm => dist(lm[4], lm[8]) < 0.05,
+            wave:      lm => { const f = fingersExtended(lm); return f.index && f.middle && f.ring && f.pinky; },
+            highFive:  lm => { const f = fingersExtended(lm); return f.index && f.middle && f.ring && f.pinky && f.thumb; },
+            openClose: lm => { const f = fingersExtended(lm); return f.index && f.middle && f.ring && f.pinky; },
+            raiseBoth: lm => lm[0].y < lm[1].y - 0.05,
+            raiseUpHigh: lm => lm[0].y < lm[1].y - 0.08,
+            backOfHand: lm => { const f = fingersExtended(lm); return !f.index && !f.middle && !f.ring && !f.pinky; },
+            sideOfHand: lm => { const f = fingersExtended(lm); return f.index && f.middle && f.ring && f.pinky && Math.abs(lm[5].x - lm[17].x) < 0.05; },
+            thumbOnly: lm => { const f = fingersExtended(lm); return f.thumb && !f.index && !f.middle && !f.ring && !f.pinky; },
+            pinkyOnly: lm => { const f = fingersExtended(lm); return !f.index && !f.middle && !f.ring && f.pinky; },
+            raiseRight: lm => lm[0].y < lm[1].y - 0.05 && lm[0].x < 0.5,
+            raiseLeft:  lm => lm[0].y < lm[1].y - 0.05 && lm[0].x > 0.5,
+            moveLeft:   (lm, ctx) => {
+                if (ctx.lastMoveX === null) { ctx.lastMoveX = lm[0].x; return false; }
+                return lm[0].x < 0.25;
+            },
+            moveRight:  (lm, ctx) => {
+                if (ctx.lastMoveX === null) { ctx.lastMoveX = lm[0].x; return false; }
+                return lm[0].x > 0.75;
+            }
+        };
+
+        let hands = null;
+        let camera = null;
+        let cameraStarted = false;
+        let loaderHidden = true;
+
+        function onResults(results) {
+            if (!loaderHidden) {
+                loaderHidden = true;
+                loader.classList.add('hidden');
+            }
+            if (gameState !== 'playing' || !currentCommand) return;
+            if (!results.multiHandLandmarks || results.multiHandLandmarks.length === 0) {
+                stableCount = 0;
+                return;
+            }
+
+            const lm = results.multiHandLandmarks[0];
+            const validator = VALIDATORS[currentCommand.validator];
+            if (!validator) return;
+
+            const passed = validator(lm, { lastMoveX });
+            if (passed) {
+                stableCount++;
+                if (stableCount >= 3) {
+                    stableCount = 0;
+                    winRound();
+                }
+            } else {
+                stableCount = 0;
+            }
+        }
+
+        function startCamera() {
+            if (cameraStarted) return;
+            cameraStarted = true;
+
+            loaderHidden = false;
+            loader.classList.remove('hidden');
+            loaderText.textContent = t('loading');
+
+            hands = new Hands({
+                locateFile: f => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${f}`
+            });
+            hands.setOptions({
+                maxNumHands: 1,
+                modelComplexity: 1,
+                minDetectionConfidence: 0.65,
+                minTrackingConfidence: 0.65
+            });
+            hands.onResults(onResults);
+
+            camera = new Camera(video, {
+                onFrame: async () => { await hands.send({ image: video }); },
+                width: 640,
+                height: 480
+            });
+
+            camera.start().catch(err => {
+                console.error('Erro ao abrir câmera:', err);
+                cameraStarted = false;
+                loaderHidden = true;
+                loader.classList.add('hidden');
+                showToast(t('cameraError'));
+            });
+        }
+
+        startBtn.addEventListener('click', () => startGame());
+        restartBtn.addEventListener('click', () => startGame());
+
+        langToggle.addEventListener('click', () => {
+            applyLang(currentLang === 'pt' ? 'en' : 'pt');
+        });
+
+        tutorialBtn.addEventListener('click', () => openModal(tutorialModal));
+        tutorialClose.addEventListener('click', () => closeModal(tutorialModal));
+        tutorialModal.addEventListener('click', e => { if (e.target === tutorialModal) closeModal(tutorialModal); });
+
+        if (!isSmallScreen) {
+            cameraAllow.addEventListener('click', () => {
+                closeModal(cameraModal);
+                startCamera();
+            });
+            cameraCancel.addEventListener('click', () => {
+                closeModal(cameraModal);
+            });
+            cameraModal.addEventListener('click', e => {
+                if (e.target === cameraModal) closeModal(cameraModal);
+            });
+        }
+
+        applyLang('pt');
+        updateLivesUI();
+        updateScoreUI();
+        updateTimerUI(GAME_TIME_MS);
+
+        if (!isSmallScreen) {
+            openModal(cameraModal);
+        }
+
+        setTimeout(() => {
+            if (!loaderHidden) {
+                loaderHidden = true;
+                loader.classList.add('hidden');
+            }
+        }, 10000);
+    </script>
+</body>
+</html>
