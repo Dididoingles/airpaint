@@ -1,0 +1,1256 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Favicon (URL absoluta) -->
+    <link rel="icon" type="image/png" href="https://dididoingles.github.io/airpaint/faviair.png">
+    <link rel="apple-touch-icon" href="https://dididoingles.github.io/airpaint/faviair.png">
+
+    <!-- SEO básico -->
+    <meta name="description" content="Pratique vocabulário de emoções em inglês fazendo expressões faciais. Ferramenta gratuita do AirPaint para alunos da professora @dicarvalho.prof.">
+    <meta name="theme-color" content="#c20000">
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="AirPaint — Emoções">
+    <meta property="og:description" content="Faça a expressão e aprenda o nome da emoção em inglês.">
+    <meta property="og:image" content="https://dididoingles.github.io/airpaint/metaair.png">
+    <meta property="og:url" content="https://dididoingles.github.io/airpaint/pages/emocoes/">
+    <meta property="og:site_name" content="AirPaint">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="AirPaint — Emoções">
+    <meta name="twitter:description" content="Faça a expressão e aprenda o nome da emoção em inglês.">
+    <meta name="twitter:image" content="https://dididoingles.github.io/airpaint/metaair.png">
+
+    <title>AirPaint — Emoções</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Gochi+Hand&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer">
+
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+        :root {
+            --ink: #222222;
+            --paper: #ffffff;
+            --accent: #c20000;
+            --accent-dark: #a30000;
+            --muted: #666666;
+            --shadow-hard-sm: 2px 3px 0 rgba(34, 34, 34, 0.85);
+            --shadow-hard: 3px 4px 0 rgba(34, 34, 34, 0.88);
+        }
+    
+        html, body { width: 100%; height: 100%; overflow: hidden; }
+    
+        body {
+            background-color: var(--paper);
+            font-family: 'Poppins', sans-serif;
+            letter-spacing: -0.05em;
+            color: var(--ink);
+            -webkit-tap-highlight-color: transparent;
+        }
+    
+        /* ============================================================
+           TOPBAR
+           ============================================================ */
+        .topbar {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 12px 16px;
+            z-index: 30;
+            background: rgba(255,255,255,0.86);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border-bottom: 1px solid rgba(34,34,34,0.06);
+            gap: 8px;
+        }
+        .brand { display: flex; align-items: center; gap: 8px; }
+        .brand-title {
+            font-weight: 700; font-size: 20px; line-height: 1;
+            color: var(--accent); letter-spacing: -0.05em;
+        }
+        .brand-title span { color: var(--ink); }
+        .brand-badge {
+            font-family: 'Gochi Hand', cursive;
+            letter-spacing: normal;
+            font-size: 12px;
+            color: var(--ink);
+            background: #fff5f5;
+            border: 1.5px solid var(--accent);
+            border-radius: 20px;
+            padding: 2px 8px;
+            transform: rotate(-3deg);
+        }
+        .topbar-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+    
+        .mini-btn {
+            display: inline-flex; align-items: center; justify-content: center;
+            gap: 5px;
+            font-family: 'Gochi Hand', cursive;
+            letter-spacing: normal;
+            font-size: 13px;
+            color: var(--ink);
+            text-decoration: none;
+            background: var(--paper);
+            border: 1.5px solid var(--ink);
+            border-radius: 10px;
+            padding: 6px 10px;
+            cursor: pointer;
+            box-shadow: var(--shadow-hard-sm);
+            transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.2s ease;
+            min-height: 36px;
+        }
+        .mini-btn:hover {
+            background: #fff5f5;
+            transform: translate(1px, 1px);
+            box-shadow: 1px 2px 0 rgba(34,34,34,0.85);
+        }
+        .mini-btn:active {
+            transform: translate(3px, 3px);
+            box-shadow: 0 0 0 rgba(34,34,34,0.85);
+        }
+        .mini-btn i { font-size: 12px; }
+    
+        /* ============================================================
+           LAYOUT PRINCIPAL
+           ============================================================ */
+        #stage {
+            position: fixed;
+            top: 56px; left: 0; right: 0; bottom: 0;
+            z-index: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            gap: 12px;
+            padding: 12px 16px 88px;
+            overflow-y: auto;
+        }
+    
+        .main-col {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            min-width: 0;
+            width: 100%;
+            max-width: 620px;
+        }
+    
+        /* ------------------------------------------------------------
+           SCANNER — paisagem, mais largo, sem esticar
+           ------------------------------------------------------------ */
+        .scanner-wrap {
+            position: relative;
+            width: min(84vw, 380px);
+            aspect-ratio: 16 / 10;
+            max-height: 44vh;
+            border-radius: 20px;
+            background: #111;
+            overflow: hidden;
+            box-shadow: var(--shadow-hard);
+            border: 3px solid var(--ink);
+            isolation: isolate;
+            flex-shrink: 0;
+        }
+        .scanner-wrap video {
+            width: 100%; height: 100%;
+            object-fit: cover;
+            transform: scaleX(-1);
+            display: block;
+        }
+        .scanner-grid {
+            position: absolute; inset: 0;
+            background-image:
+                linear-gradient(rgba(255,255,255,0.06) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.06) 1px, transparent 1px);
+            background-size: 24px 24px;
+            pointer-events: none;
+            mix-blend-mode: screen;
+            opacity: 0.7;
+        }
+        .scanner-corners span {
+            position: absolute;
+            width: 22px; height: 22px;
+            border: 3px solid #ffffff;
+            border-radius: 4px;
+            opacity: 0.85;
+            transition: border-color 0.3s ease;
+            z-index: 3;
+        }
+        .scanner-corners span:nth-child(1) { top: 10px; left: 10px; border-right: none; border-bottom: none; }
+        .scanner-corners span:nth-child(2) { top: 10px; right: 10px; border-left: none; border-bottom: none; }
+        .scanner-corners span:nth-child(3) { bottom: 10px; left: 10px; border-right: none; border-top: none; }
+        .scanner-corners span:nth-child(4) { bottom: 10px; right: 10px; border-left: none; border-top: none; }
+        .scanner-line {
+            position: absolute;
+            left: 0; right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, var(--accent), transparent);
+            box-shadow: 0 0 18px var(--accent), 0 0 6px #ffffff inset;
+            top: 0;
+            z-index: 4;
+            animation: scanIdle 3.2s ease-in-out infinite;
+            opacity: 0.85;
+        }
+        @keyframes scanIdle {
+            0%   { top: 8%; opacity: 0.5; }
+            50%  { top: 88%; opacity: 1; }
+            100% { top: 8%; opacity: 0.5; }
+        }
+        .scanner-wrap.analyzing {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent), var(--shadow-hard);
+        }
+        .scanner-wrap.analyzing .scanner-line {
+            animation: scanFast 0.55s linear infinite;
+            opacity: 1;
+            height: 4px;
+        }
+        .scanner-wrap.analyzing .scanner-corners span { border-color: var(--accent); }
+        @keyframes scanFast {
+            0%   { top: 6%; }
+            100% { top: 94%; }
+        }
+    
+        .scanner-result {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            background: rgba(10, 10, 10, 0.62);
+            backdrop-filter: blur(2px);
+            -webkit-backdrop-filter: blur(2px);
+            color: #ffffff;
+            text-align: center;
+            padding: 16px;
+            z-index: 5;
+            opacity: 0;
+            transform: scale(0.92);
+            transition: opacity 0.35s ease, transform 0.35s cubic-bezier(0.22,1,0.36,1);
+            pointer-events: none;
+        }
+        .scanner-result.visible {
+            opacity: 1;
+            transform: scale(1);
+        }
+        .result-name {
+            font-family: 'Gochi Hand', cursive;
+            letter-spacing: normal;
+            font-weight: 400;
+            font-size: clamp(32px, 7vw, 52px);
+            line-height: 1.05;
+            color: #ffffff;
+        }
+        .result-name .accent { color: #ff5a5a; }
+        .result-translation {
+            font-size: 12px;
+            color: rgba(255,255,255,0.78);
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+        .result-confidence {
+            margin-top: 8px;
+            width: 60%;
+            height: 6px;
+            background: rgba(255,255,255,0.18);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        .result-confidence-fill {
+            height: 100%;
+            width: 0%;
+            background: var(--accent);
+            border-radius: 3px;
+            transition: width 0.4s ease;
+        }
+    
+        .scanner-status {
+            font-family: 'Gochi Hand', cursive;
+            letter-spacing: normal;
+            font-size: 15px;
+            color: var(--muted);
+            text-align: center;
+            min-height: 20px;
+        }
+        .scanner-status.analyzing-text { color: var(--accent); }
+    
+        /* ------------------------------------------------------------
+           CARD DE DESAFIO
+           ------------------------------------------------------------ */
+        .challenge-card {
+            display: none;
+            align-items: center;
+            gap: 10px;
+            background: #fff5f5;
+            border: 2px dashed var(--accent);
+            border-radius: 14px;
+            padding: 12px 18px;
+            box-shadow: var(--shadow-hard-sm);
+            max-width: 100%;
+            width: 100%;
+            text-align: center;
+            justify-content: center;
+        }
+        .challenge-card.show { display: flex; }
+        .challenge-card i { color: var(--accent); font-size: 16px; flex-shrink: 0; }
+        .challenge-text { font-size: 14px; color: #444; letter-spacing: -0.02em; }
+        .challenge-text strong {
+            font-family: 'Gochi Hand', cursive;
+            letter-spacing: normal;
+            font-size: 18px;
+            color: var(--accent);
+            font-weight: 400;
+        }
+    
+        /* ------------------------------------------------------------
+           PAINEL DE CONTROLE
+           Mobile: barra inferior.
+           Desktop: coluna à esquerda, mais larga, botão em linha única.
+           ------------------------------------------------------------ */
+        #controlPanel {
+            position: fixed;
+            z-index: 25;
+            background: rgba(255,255,255,0.96);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1.5px solid rgba(34,34,34,0.10);
+            box-shadow: 0 12px 32px rgba(0,0,0,0.10);
+    
+            left: 12px; right: 12px; bottom: 12px;
+            border-radius: 16px;
+            padding: 10px;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: flex-start;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+    
+        .control-btn {
+            display: inline-flex; align-items: center; justify-content: center;
+            gap: 6px;
+            font-family: 'Gochi Hand', cursive;
+            letter-spacing: normal;
+            font-size: 14px;
+            padding: 0 16px;
+            height: 42px;
+            border-radius: 10px;
+            border: 2px solid var(--ink);
+            cursor: pointer;
+            background: var(--paper);
+            color: var(--ink);
+            text-decoration: none;
+            box-shadow: var(--shadow-hard-sm);
+            transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.2s ease;
+            min-height: 42px;
+            white-space: nowrap;
+        }
+        .control-btn:hover {
+            background: #fff5f5;
+            transform: translate(1px, 1px);
+            box-shadow: 1px 2px 0 rgba(34,34,34,0.85);
+        }
+        .control-btn:active {
+            transform: translate(3px, 3px);
+            box-shadow: 0 0 0 rgba(34,34,34,0.85);
+        }
+        .control-btn.primary {
+            background: var(--accent);
+            color: #fff;
+        }
+        .control-btn.primary:hover { background: var(--accent-dark); }
+    
+        /* ============================================================
+           MODAIS
+           ============================================================ */
+        .modal-backdrop {
+            position: fixed; inset: 0;
+            background: rgba(20, 20, 20, 0.55);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            z-index: 100;
+            display: flex; align-items: center; justify-content: center;
+            padding: 20px;
+            opacity: 0; visibility: hidden;
+            transition: opacity 0.25s ease, visibility 0.25s ease;
+        }
+        .modal-backdrop.open { opacity: 1; visibility: visible; }
+    
+        .modal {
+            background: var(--paper);
+            border: 2px solid var(--ink);
+            border-radius: 18px;
+            box-shadow: var(--shadow-hard);
+            width: 100%;
+            max-width: 440px;
+            padding: 24px 22px 20px;
+            transform: translateY(12px) scale(0.98);
+            transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+            max-height: 88vh;
+            overflow-y: auto;
+        }
+        .modal-backdrop.open .modal { transform: translateY(0) scale(1); }
+    
+        .modal-icon {
+            width: 44px; height: 44px;
+            border-radius: 12px;
+            background: #fff5f5;
+            border: 1.5px solid var(--accent);
+            color: var(--accent);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 18px;
+            margin-bottom: 14px;
+        }
+        .modal h2 {
+            font-size: 20px;
+            font-weight: 700;
+            letter-spacing: -0.04em;
+            margin-bottom: 6px;
+        }
+        .modal p {
+            font-size: 13.5px;
+            line-height: 1.5;
+            color: #444;
+            margin-bottom: 16px;
+            letter-spacing: -0.02em;
+        }
+        .modal ul {
+            list-style: none;
+            display: flex; flex-direction: column;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .modal ul li {
+            display: flex; align-items: flex-start; gap: 10px;
+            font-size: 13px;
+            color: #333;
+            line-height: 1.45;
+            letter-spacing: -0.02em;
+        }
+        .modal ul li i {
+            color: var(--accent);
+            font-size: 13px;
+            margin-top: 3px;
+            flex-shrink: 0;
+            width: 16px;
+            text-align: center;
+        }
+        .modal-actions {
+            display: flex; gap: 10px; justify-content: flex-end;
+            flex-wrap: wrap;
+        }
+        .btn-primary, .btn-ghost {
+            display: inline-flex; align-items: center; justify-content: center;
+            gap: 6px;
+            font-family: 'Gochi Hand', cursive;
+            letter-spacing: normal;
+            font-size: 15px;
+            padding: 0 18px;
+            height: 42px;
+            border-radius: 10px;
+            cursor: pointer;
+            border: 2px solid var(--ink);
+            text-decoration: none;
+            min-height: 42px;
+        }
+        .btn-primary {
+            background: var(--accent);
+            color: #fff;
+            box-shadow: var(--shadow-hard-sm);
+            transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.2s ease;
+        }
+        .btn-primary:hover {
+            background: var(--accent-dark);
+            transform: translate(1px, 1px);
+            box-shadow: 1px 2px 0 rgba(34,34,34,0.85);
+        }
+        .btn-primary:active {
+            transform: translate(3px, 3px);
+            box-shadow: 0 0 0 rgba(34,34,34,0.85);
+        }
+        .btn-ghost {
+            background: var(--paper);
+            color: var(--ink);
+            transition: background 0.2s ease;
+        }
+        .btn-ghost:hover { background: #fff5f5; }
+    
+        /* ============================================================
+           MODAL MOBILE BLOQUEANTE
+           ============================================================ */
+        #mobileWarningModal { display: none; }
+        @media (max-width: 899px) {
+            #mobileWarningModal { display: flex; }
+        }
+    
+        .mobile-warning-art {
+            display: flex; align-items: center; justify-content: center;
+            margin: 4px auto 14px;
+            width: 140px; height: 140px;
+            background: #fff5f5;
+            border: 2px dashed rgba(194, 0, 0, 0.35);
+            border-radius: 50%;
+            overflow: hidden;
+            position: relative;
+        }
+        .mobile-warning-art img {
+            width: 100%; height: 100%;
+            object-fit: contain;
+            display: block;
+        }
+        .mobile-warning-art .fallback {
+            font-size: 64px;
+            line-height: 1;
+        }
+        .mobile-warning-title {
+            text-align: center;
+            font-family: 'Gochi Hand', cursive;
+            letter-spacing: normal;
+            font-weight: 400;
+            font-size: 24px;
+            color: var(--ink);
+            margin-bottom: 6px;
+        }
+        .mobile-warning-title .accent { color: var(--accent); }
+        .mobile-warning-text {
+            text-align: center;
+            font-size: 13.5px;
+            line-height: 1.55;
+            color: #555;
+            margin-bottom: 18px;
+            letter-spacing: -0.02em;
+        }
+        .mobile-warning .modal-actions { justify-content: center; }
+        .mobile-warning .modal-actions .btn-ghost {
+            flex: 1 1 100%;
+            max-width: 240px;
+        }
+    
+        /* ============================================================
+           TOASTS
+           ============================================================ */
+        #toastContainer {
+            position: fixed;
+            top: 64px; right: 12px;
+            z-index: 60;
+            display: flex; flex-direction: column; gap: 8px;
+            pointer-events: none;
+        }
+        .toast {
+            background: #fff;
+            border: 1.5px solid rgba(34,34,34,0.10);
+            border-left: 4px solid var(--accent);
+            color: var(--ink);
+            padding: 10px 14px;
+            border-radius: 0 10px 10px 0;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.10);
+            font-size: 12px;
+            font-weight: 500;
+            display: flex; align-items: center; gap: 8px;
+            animation: toastIn 0.3s cubic-bezier(0.16,1,0.3,1) forwards;
+            max-width: 260px;
+        }
+        .toast i { color: var(--accent); font-size: 13px; }
+        @keyframes toastIn {
+            from { transform: translateX(120%); opacity: 0; }
+            to   { transform: translateX(0);    opacity: 1; }
+        }
+        @keyframes toastOut {
+            from { transform: translateX(0);    opacity: 1; }
+            to   { transform: translateX(120%); opacity: 0; }
+        }
+    
+        /* ============================================================
+           LOADER
+           ============================================================ */
+        #loader {
+            position: fixed; inset: 0;
+            background: var(--paper);
+            z-index: 9999;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            gap: 18px;
+            transition: opacity 0.5s ease, visibility 0.5s;
+        }
+        #loader.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+        .spinner {
+            width: 40px; height: 40px; border-radius: 50%;
+            border: 3px solid rgba(194,0,0,0.15);
+            border-top-color: var(--accent);
+            animation: spin 0.9s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        #loader p {
+            font-family: 'Gochi Hand', cursive;
+            letter-spacing: normal;
+            font-size: 17px;
+            color: var(--ink);
+            opacity: 0.75;
+            text-align: center;
+            padding: 0 24px;
+        }
+    
+        /* ============================================================
+           FOOTER
+           ============================================================ */
+        .site-footer {
+            position: fixed;
+            bottom: 4px; left: 50%;
+            transform: translateX(-50%);
+            z-index: 30;
+            font-size: 10px;
+            color: var(--muted);
+            text-align: center;
+            background: rgba(255,255,255,0.86);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            padding: 3px 12px;
+            border-radius: 20px;
+            border: 1px solid rgba(34,34,34,0.08);
+            white-space: nowrap;
+        }
+        .site-footer a { color: var(--accent); text-decoration: none; font-weight: 600; }
+        .site-footer a:hover { text-decoration: underline; }
+    
+        /* ============================================================
+           TABLET
+           ============================================================ */
+        @media (min-width: 768px) {
+            .topbar { padding: 14px 24px; }
+            .brand-title { font-size: 22px; }
+            .mini-btn { min-height: 40px; font-size: 14px; padding: 7px 12px; }
+    
+            #stage {
+                top: 64px;
+                padding: 16px 24px 24px 230px;
+                justify-content: flex-start;
+            }
+    
+            .scanner-wrap {
+                width: min(62vw, 500px);
+                aspect-ratio: 16 / 10;
+                max-height: 52vh;
+            }
+    
+            #controlPanel {
+                left: 16px;
+                right: auto;
+                top: 50%;
+                bottom: auto;
+                transform: translateY(-50%);
+                width: 200px;
+                padding: 14px 12px;
+                flex-direction: column;
+                align-items: stretch;
+                justify-content: flex-start;
+                gap: 10px;
+                border-radius: 16px;
+                flex-wrap: nowrap;
+            }
+            #controlPanel .control-btn {
+                width: 100%;
+                height: auto;
+                min-height: 52px;
+                padding: 12px 14px;
+                font-size: 15px;
+                flex-direction: row;
+                gap: 10px;
+                white-space: normal;
+                text-align: left;
+                line-height: 1.2;
+            }
+            #controlPanel .control-btn i {
+                font-size: 16px;
+                flex-shrink: 0;
+            }
+    
+            .site-footer { font-size: 11px; padding: 4px 16px; }
+        }
+    
+        /* ============================================================
+           DESKTOP
+           ============================================================ */
+        @media (min-width: 1024px) {
+            .topbar { padding: 16px 60px; }
+            .brand-title { font-size: 26px; }
+            .brand-badge { font-size: 13px; }
+    
+            #stage { padding: 20px 40px 24px 250px; }
+    
+            .scanner-wrap {
+                width: min(52vw, 620px);
+                aspect-ratio: 16 / 10;
+                max-height: 56vh;
+                border-radius: 24px;
+            }
+    
+            #controlPanel {
+                left: 24px;
+                width: 220px;
+                padding: 16px 14px;
+                gap: 12px;
+            }
+            #controlPanel .control-btn {
+                min-height: 56px;
+                font-size: 16px;
+                padding: 14px 16px;
+            }
+    
+            .site-footer { font-size: 12px; bottom: 8px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="loader" class="hidden" aria-hidden="true">
+        <div class="spinner"></div>
+        <p id="loaderText">Preparando a câmera…</p>
+    </div>
+
+    <div id="toastContainer"></div>
+
+    <header class="topbar">
+        <div class="brand">
+            <span class="brand-title">Air<span>Paint</span></span>
+            <span class="brand-badge">emotions</span>
+        </div>
+        <div class="topbar-actions">
+            <button class="mini-btn" id="langToggle" type="button" aria-label="Alternar idioma">
+                <i class="fa-solid fa-globe"></i>
+                <span id="langLabel">EN</span>
+            </button>
+            <button class="mini-btn" id="tutorialBtn" type="button">
+                <i class="fa-solid fa-circle-question"></i>
+                <span data-i18n="tutorial">Tutorial</span>
+            </button>
+            <a class="mini-btn" href="https://dididoingles.github.io/airpaint/">
+                <i class="fa-solid fa-arrow-left"></i>
+                <span data-i18n="back">Hub</span>
+            </a>
+        </div>
+    </header>
+
+    <div id="stage">
+        <div class="main-col">
+            <div class="scanner-wrap" id="scannerWrap">
+                <video id="webcam" autoplay playsinline muted></video>
+                <div class="scanner-grid"></div>
+                <div class="scanner-corners"><span></span><span></span><span></span><span></span></div>
+                <div class="scanner-line"></div>
+
+                <div class="scanner-result" id="scannerResult">
+                    <div class="result-name" id="resultName">neutral</div>
+                    <div class="result-translation" id="resultTranslation">neutro</div>
+                    <div class="result-confidence"><div class="result-confidence-fill" id="resultConfidence"></div></div>
+                </div>
+            </div>
+
+            <div class="scanner-status" id="scannerStatus" data-i18n="statusIdle">Faça uma expressão para começar</div>
+
+            <div class="challenge-card" id="challengeCard">
+                <i class="fa-solid fa-dice"></i>
+                <span class="challenge-text">
+                    <span data-i18n="challengeLabel">Desafio:</span>
+                    <strong id="challengeWord">happy</strong>
+                    <span data-i18n="challengeHint">— faça essa expressão!</span>
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <section id="controlPanel" aria-label="Controles">
+        <button class="control-btn primary" id="challengeBtn" type="button">
+            <i class="fa-solid fa-dice"></i>
+            <span data-i18n="challengeBtn"> Sortear desafio  </span>
+        </button>
+        <button class="control-btn" id="stopChallengeBtn" type="button" style="display:none;">
+            <i class="fa-solid fa-xmark"></i>
+            <span data-i18n="stopChallenge">Desistir</span>
+        </button>
+    </section>
+
+    <footer class="site-footer">
+        Desenvolvido pela professora
+        <a href="https://www.instagram.com/dicarvalho.prof/" target="_blank" rel="noopener noreferrer">@dicarvalho.prof</a>
+    </footer>
+
+    <!-- Modal: aviso mobile BLOQUEANTE (sem escape) -->
+    <div class="modal-backdrop open" id="mobileWarningModal" role="dialog" aria-modal="true" aria-labelledby="mobileWarningTitle">
+        <div class="modal mobile-warning">
+            <div class="mobile-warning-art" id="mobileWarningArt">
+                <img src="https://dididoingles.github.io/airpaint/assets/triste.webp" alt="" onerror="this.style.display='none'; this.parentNode.querySelector('.fallback').style.display='block';">
+                <span class="fallback" style="display:none;"><i class="fa-regular fa-face-sad-tear" style="color:var(--accent);"></i></span>
+            </div>
+            <h2 class="mobile-warning-title" id="mobileWarningTitle" data-i18n="mobileTitle">Ops, o celular <span class="accent">não dá conta</span>…</h2>
+            <p class="mobile-warning-text" data-i18n="mobileBody">O AirPaint usa bastante memória para reconhecer expressões faciais. No celular ele pode travar ou ficar lento. Abra no computador para a experiência completa.</p>
+            <div class="modal-actions">
+                <a class="btn-ghost" href="https://dididoingles.github.io/airpaint/">
+                    <i class="fa-solid fa-arrow-left"></i>
+                    <span data-i18n="mobileBack">Voltar ao hub</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: permissão da câmera -->
+    <div class="modal-backdrop" id="cameraModal" role="dialog" aria-modal="true" aria-labelledby="cameraModalTitle">
+        <div class="modal">
+            <div class="modal-icon"><i class="fa-solid fa-camera"></i></div>
+            <h2 id="cameraModalTitle" data-i18n="camTitle">Permitir acesso à câmera?</h2>
+            <p data-i18n="camBody">Para detectar suas expressões, o AirPaint precisa acessar sua webcam. O vídeo é processado no seu navegador e não é enviado para nenhum servidor.</p>
+            <ul>
+                <li><i class="fa-solid fa-face-smile"></i><span data-i18n="camTip1">Sorria para detectar "happy".</span></li>
+                <li><i class="fa-solid fa-face-angry"></i><span data-i18n="camTip2">Franza a testa para "angry".</span></li>
+                <li><i class="fa-solid fa-face-surprise"></i><span data-i18n="camTip3">Abra bem os olhos para "surprised".</span></li>
+            </ul>
+            <div class="modal-actions">
+                <button class="btn-ghost" id="cameraCancel" type="button" data-i18n="camCancel">Agora não</button>
+                <button class="btn-primary" id="cameraAllow" type="button">
+                    <i class="fa-solid fa-video"></i>
+                    <span data-i18n="camAllow">Permitir câmera</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: tutorial -->
+    <div class="modal-backdrop" id="tutorialModal" role="dialog" aria-modal="true" aria-labelledby="tutorialModalTitle">
+        <div class="modal">
+            <div class="modal-icon"><i class="fa-solid fa-graduation-cap"></i></div>
+            <h2 id="tutorialModalTitle" data-i18n="tutTitle">Como usar o AirPaint — Emoções</h2>
+            <p data-i18n="tutBody">O app reconhece três emoções com boa precisão (happy, angry, surprised) e tenta também captar sad. Faça a expressão e veja o nome em inglês aparecer na tela.</p>
+            <ul>
+                <li><i class="fa-solid fa-face-smile"></i><span data-i18n="tutHappy">Happy: sorria.</span></li>
+                <li><i class="fa-solid fa-face-angry"></i><span data-i18n="tutAngry">Angry: testa franzida.</span></li>
+                <li><i class="fa-solid fa-face-surprise"></i><span data-i18n="tutSurprised">Surprised: olhos bem abertos.</span></li>
+                <li><i class="fa-solid fa-face-frown"></i><span data-i18n="tutSad">Sad: canto da boca para baixo. É a mais difícil de detectar — não se preocupe se não aparecer.</span></li>
+                <li><i class="fa-solid fa-dice"></i><span data-i18n="tutChallenge">Use "Sortear um desafio" para receber uma emoção-alvo (happy, angry ou surprised) e tentar reproduzi-la.</span></li>
+            </ul>
+            <div class="modal-actions">
+                <button class="btn-primary" id="tutorialClose" type="button">
+                    <i class="fa-solid fa-check"></i>
+                    <span data-i18n="tutClose">Entendi</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { FaceLandmarker, FilesetResolver } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/vision_bundle.mjs";
+
+        /* ============================================================
+           BLOQUEIO MOBILE
+           ============================================================ */
+        const isSmallScreen = window.matchMedia('(max-width: 899px)').matches;
+        const mobileWarningModal = document.getElementById('mobileWarningModal');
+
+        if (isSmallScreen) {
+            const observer = new MutationObserver(() => {
+                if (!mobileWarningModal.classList.contains('open')) {
+                    mobileWarningModal.classList.add('open');
+                }
+            });
+            observer.observe(mobileWarningModal, { attributes: true, attributeFilter: ['class'] });
+        }
+
+        /* ============================================================
+           i18n
+           ============================================================ */
+        const I18N = {
+            pt: {
+                tutorial: 'Tutorial', back: 'Hub',
+                statusIdle: 'Faça uma expressão para começar',
+                statusScanning: 'Analisando…',
+                challengeLabel: 'Desafio:', challengeHint: '— faça essa expressão!',
+                challengeBtn: 'Sortear desafio', stopChallenge: 'Desistir',
+                challengeDone: 'Desafio cumprido!',
+                loading: 'Preparando a câmera…',
+                cameraError: 'Permissão da câmera negada ou não encontrada.',
+                camTitle: 'Permitir acesso à câmera?',
+                camBody: 'Para detectar suas expressões, o AirPaint precisa acessar sua webcam. O vídeo é processado no seu navegador e não é enviado para nenhum servidor.',
+                camTip1: 'Sorria para detectar "happy".',
+                camTip2: 'Franza a testa para "angry".',
+                camTip3: 'Abra bem os olhos para "surprised".',
+                camAllow: 'Permitir câmera', camCancel: 'Agora não',
+                tutTitle: 'Como usar o AirPaint — Emoções',
+                tutBody: 'O app reconhece três emoções com boa precisão (happy, angry, surprised) e tenta também captar sad. Faça a expressão e veja o nome em inglês aparecer na tela.',
+                tutHappy: 'Happy: sorria.',
+                tutAngry: 'Angry: testa franzida.',
+                tutSurprised: 'Surprised: olhos bem abertos.',
+                tutSad: 'Sad: canto da boca para baixo. É a mais difícil de detectar — não se preocupe se não aparecer.',
+                tutChallenge: 'Use "Sortear um desafio" para receber uma emoção-alvo (happy, angry ou surprised) e tentar reproduzi-la.',
+                tutClose: 'Entendi',
+                mobileTitle: 'Ops, o celular não dá conta…',
+                mobileBody: 'O AirPaint usa bastante memória para reconhecer expressões faciais. No celular ele pode travar ou ficar lento. Abra no computador para a experiência completa.',
+                mobileBack: 'Voltar ao hub',
+                lang: 'PT'
+            },
+            en: {
+                tutorial: 'Tutorial', back: 'Hub',
+                statusIdle: 'Make an expression to begin',
+                statusScanning: 'Scanning…',
+                challengeLabel: 'Challenge:', challengeHint: '— make this face!',
+                challengeBtn: 'Pick a challenge', stopChallenge: 'Give up',
+                challengeDone: 'Challenge complete!',
+                loading: 'Preparing the camera…',
+                cameraError: 'Camera permission denied or not found.',
+                camTitle: 'Allow camera access?',
+                camBody: 'To detect your expressions, AirPaint needs access to your webcam. The video is processed in your browser and is not sent to any server.',
+                camTip1: 'Smile to detect "happy".',
+                camTip2: 'Frown to detect "angry".',
+                camTip3: 'Open your eyes wide for "surprised".',
+                camAllow: 'Allow camera', camCancel: 'Not now',
+                tutTitle: 'How to use AirPaint — Emotions',
+                tutBody: 'The app recognises three emotions reliably (happy, angry, surprised) and also tries to catch sad. Make the face and see the English word appear on screen.',
+                tutHappy: 'Happy: smile.',
+                tutAngry: 'Angry: furrowed brow.',
+                tutSurprised: 'Surprised: wide open eyes.',
+                tutSad: 'Sad: corners of the mouth down. It is the hardest to detect — don’t worry if it doesn’t show up.',
+                tutChallenge: 'Use "Pick a challenge" to get a target emotion (happy, angry or surprised) and try to make it.',
+                tutClose: 'Got it',
+                mobileTitle: 'Oops, phones can’t quite handle it…',
+                mobileBody: 'AirPaint uses a lot of memory to recognise facial expressions. On a phone it may freeze or get slow. Open it on a computer for the full experience.',
+                mobileBack: 'Back to hub',
+                lang: 'EN'
+            }
+        };
+        let currentLang = 'pt';
+        function t(key) { return (I18N[currentLang] && I18N[currentLang][key]) || key; }
+
+        function applyLang(lang) {
+            currentLang = lang;
+            document.documentElement.lang = lang === 'pt' ? 'pt-BR' : 'en';
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                el.textContent = t(key);
+            });
+            const label = document.getElementById('langLabel');
+            if (label) label.textContent = I18N[lang].lang;
+            if (loaderText && loader && !loader.classList.contains('hidden')) {
+                loaderText.textContent = t('loading');
+            }
+            if (scannerState === 'idle') scannerStatus.textContent = t('statusIdle');
+        }
+
+        /* ============================================================
+           ELEMENTOS
+           ============================================================ */
+        const video = document.getElementById('webcam');
+        const scannerWrap = document.getElementById('scannerWrap');
+        const scannerResult = document.getElementById('scannerResult');
+        const resultName = document.getElementById('resultName');
+        const resultTranslation = document.getElementById('resultTranslation');
+        const resultConfidence = document.getElementById('resultConfidence');
+        const scannerStatus = document.getElementById('scannerStatus');
+        const challengeCard = document.getElementById('challengeCard');
+        const challengeWord = document.getElementById('challengeWord');
+        const challengeBtn = document.getElementById('challengeBtn');
+        const stopChallengeBtn = document.getElementById('stopChallengeBtn');
+        const loader = document.getElementById('loader');
+        const loaderText = document.getElementById('loaderText');
+        const toastContainer = document.getElementById('toastContainer');
+
+        const langToggle = document.getElementById('langToggle');
+        const tutorialBtn = document.getElementById('tutorialBtn');
+        const tutorialModal = document.getElementById('tutorialModal');
+        const tutorialClose = document.getElementById('tutorialClose');
+        const cameraModal = document.getElementById('cameraModal');
+        const cameraAllow = document.getElementById('cameraAllow');
+        const cameraCancel = document.getElementById('cameraCancel');
+
+        /* ============================================================
+           MAPA DE EMOÇÕES (sem emojis)
+           ============================================================ */
+        const EMOTIONS = {
+            happy: { pt: 'feliz', en: 'happy' },
+            sad: { pt: 'triste', en: 'sad' },
+            angry: { pt: 'bravo', en: 'angry' },
+            surprised: { pt: 'surpreso', en: 'surprised' },
+            neutral: { pt: 'neutro', en: 'neutral' }
+        };
+        const CHALLENGE_POOL = ['happy', 'angry', 'surprised'];
+        let currentChallenge = null;
+
+        /* ============================================================
+           CLASSIFICADOR
+           ============================================================ */
+        function classifyEmotion(blendshapes) {
+            const map = {};
+            for (const b of blendshapes) map[b.categoryName] = b.score;
+
+            const smile = (map.mouthSmileLeft || 0) + (map.mouthSmileRight || 0);
+            const frown = (map.mouthFrownLeft || 0) + (map.mouthFrownRight || 0);
+            const browDown = (map.browDownLeft || 0) + (map.browDownRight || 0);
+            const eyeWide = (map.eyeWideLeft || 0) + (map.eyeWideRight || 0);
+            const browUp = (map.browInnerUp || 0) + (map.browOuterUpLeft || 0) + (map.browOuterUpRight || 0);
+            const jawOpen = map.jawOpen || 0;
+            const browInnerUp = map.browInnerUp || 0;
+
+            const happyScore = smile / 2;
+            const sadScore = (frown / 2) * 0.7 + browInnerUp * 0.3;
+            const angryScore = (browDown / 2) * 0.7 + (frown / 2) * 0.3;
+            const surprisedScore = (eyeWide / 2) * 0.5 + (browUp / 3) * 0.3 + jawOpen * 0.2;
+
+            const candidates = [
+                { name: 'happy', score: happyScore },
+                { name: 'sad', score: sadScore },
+                { name: 'angry', score: angryScore },
+                { name: 'surprised', score: surprisedScore }
+            ];
+            candidates.sort((a, b) => b.score - a.score);
+            const top = candidates[0];
+
+            if (top.name === 'sad') {
+                if (sadScore < 0.08) return { name: 'neutral', score: 1 - top.score };
+                return { name: 'sad', score: sadScore };
+            }
+            if (top.score < 0.15) return { name: 'neutral', score: 1 - top.score };
+            return { name: top.name, score: top.score };
+        }
+
+        /* ============================================================
+           SCANNER / UI
+           ============================================================ */
+        let scannerState = 'idle';
+        let analyzeTimer = null;
+        let resultTimer = null;
+        let pendingEmotion = null;
+
+        function setScannerIdle() {
+            scannerState = 'idle';
+            scannerWrap.classList.remove('analyzing');
+            scannerResult.classList.remove('visible');
+            scannerStatus.classList.remove('analyzing-text');
+            scannerStatus.textContent = t('statusIdle');
+        }
+
+        function triggerScan(emotion, confidence) {
+            if (scannerState !== 'idle') return;
+            scannerState = 'analyzing';
+            pendingEmotion = { emotion, confidence };
+            scannerWrap.classList.add('analyzing');
+            scannerStatus.classList.add('analyzing-text');
+            scannerStatus.textContent = t('statusScanning');
+            analyzeTimer = setTimeout(() => {
+                showResult(pendingEmotion.emotion, pendingEmotion.confidence);
+            }, 800);
+        }
+
+        function showResult(emotion, confidence) {
+            scannerState = 'result';
+            scannerWrap.classList.remove('analyzing');
+
+            const info = EMOTIONS[emotion] || EMOTIONS.neutral;
+            resultName.textContent = info.en;
+            resultTranslation.textContent = currentLang === 'pt' ? info.pt : '';
+            resultConfidence.style.width = Math.min(100, Math.round(confidence * 100)) + '%';
+
+            scannerResult.classList.add('visible');
+            scannerStatus.classList.remove('analyzing-text');
+            scannerStatus.textContent = '';
+
+            if (currentChallenge && emotion === currentChallenge) {
+                showToast(t('challengeDone'));
+                currentChallenge = null;
+                challengeCard.classList.remove('show');
+                stopChallengeBtn.style.display = 'none';
+            }
+
+            resultTimer = setTimeout(() => {
+                scannerResult.classList.remove('visible');
+                setTimeout(setScannerIdle, 300);
+            }, 1600);
+        }
+
+        /* ============================================================
+           TOAST
+           ============================================================ */
+        function showToast(message) {
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.innerHTML = `<i class="fa-solid fa-circle-check"></i><span>${message}</span>`;
+            toastContainer.appendChild(toast);
+            setTimeout(() => {
+                toast.style.animation = 'toastOut 0.3s cubic-bezier(0.16,1,0.3,1) forwards';
+                setTimeout(() => toast.remove(), 300);
+            }, 2000);
+        }
+
+        /* ============================================================
+           MODAIS (não-mobile)
+           ============================================================ */
+        function openModal(el) { el.classList.add('open'); }
+        function closeModal(el) { el.classList.remove('open'); }
+
+        /* ============================================================
+           DESAFIO
+           ============================================================ */
+        challengeBtn.addEventListener('click', () => {
+            const pool = CHALLENGE_POOL.filter(e => e !== currentChallenge);
+            currentChallenge = pool[Math.floor(Math.random() * pool.length)];
+            challengeWord.textContent = currentChallenge;
+            challengeCard.classList.add('show');
+            stopChallengeBtn.style.display = 'inline-flex';
+        });
+
+        stopChallengeBtn.addEventListener('click', () => {
+            currentChallenge = null;
+            challengeCard.classList.remove('show');
+            stopChallengeBtn.style.display = 'none';
+        });
+
+        /* ============================================================
+           UI
+           ============================================================ */
+        langToggle.addEventListener('click', () => {
+            applyLang(currentLang === 'pt' ? 'en' : 'pt');
+        });
+
+        tutorialBtn.addEventListener('click', () => openModal(tutorialModal));
+        tutorialClose.addEventListener('click', () => closeModal(tutorialModal));
+        tutorialModal.addEventListener('click', e => { if (e.target === tutorialModal) closeModal(tutorialModal); });
+
+        /* ============================================================
+           FACE LANDMARKER
+           ============================================================ */
+        let faceLandmarker = null;
+        let lastVideoTime = -1;
+        let cameraStarted = false;
+        let loaderHidden = true;
+        let animFrameId = null;
+        let stableCount = 0;
+        let lastCandidate = null;
+
+        async function startCamera() {
+            if (cameraStarted) return;
+            cameraStarted = true;
+
+            loaderHidden = false;
+            loader.classList.remove('hidden');
+            loaderText.textContent = t('loading');
+
+            try {
+                const vision = await FilesetResolver.forVisionTasks(
+                    "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm"
+                );
+                faceLandmarker = await FaceLandmarker.createFromOptions(vision, {
+                    baseOptions: {
+                        modelAssetPath: "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task",
+                        delegate: "GPU"
+                    },
+                    outputFaceBlendshapes: true,
+                    runningMode: "VIDEO",
+                    numFaces: 1,
+                    minFaceDetectionConfidence: 0.5,
+                    minFacePresenceConfidence: 0.5,
+                    minTrackingConfidence: 0.5
+                });
+
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: { width: 640, height: 480, facingMode: "user" }
+                });
+                video.srcObject = stream;
+                await video.play();
+
+                loaderHidden = true;
+                loader.classList.add('hidden');
+
+                loopDetection();
+
+            } catch (err) {
+                console.error('Erro ao iniciar câmera/FaceLandmarker:', err);
+                loaderHidden = true;
+                loader.classList.add('hidden');
+                cameraStarted = false;
+                showToast(t('cameraError'));
+            }
+        }
+
+        function loopDetection() {
+            if (!faceLandmarker || !video.videoWidth) {
+                animFrameId = requestAnimationFrame(loopDetection);
+                return;
+            }
+
+            const now = performance.now();
+            if (video.currentTime !== lastVideoTime) {
+                lastVideoTime = video.currentTime;
+                const results = faceLandmarker.detectForVideo(video, now);
+
+                if (results.faceBlendshapes && results.faceBlendshapes.length > 0) {
+                    const blendshapes = results.faceBlendshapes[0].categories;
+                    const { name, score } = classifyEmotion(blendshapes);
+
+                    if (scannerState === 'idle') {
+                        if (name !== 'neutral') {
+                            if (lastCandidate === name) {
+                                stableCount++;
+                            } else {
+                                lastCandidate = name;
+                                stableCount = 1;
+                            }
+                            if (stableCount >= 4) {
+                                triggerScan(name, score);
+                                stableCount = 0;
+                                lastCandidate = null;
+                            }
+                        } else {
+                            stableCount = 0;
+                            lastCandidate = null;
+                        }
+                    }
+                }
+            }
+
+            animFrameId = requestAnimationFrame(loopDetection);
+        }
+
+        /* ============================================================
+           EVENTOS DE CÂMERA (só desktop)
+           ============================================================ */
+        if (!isSmallScreen) {
+            cameraAllow.addEventListener('click', () => {
+                closeModal(cameraModal);
+                startCamera();
+            });
+            cameraCancel.addEventListener('click', () => {
+                closeModal(cameraModal);
+            });
+            cameraModal.addEventListener('click', e => {
+                if (e.target === cameraModal) closeModal(cameraModal);
+            });
+        }
+
+        /* ============================================================
+           BOOT
+           ============================================================ */
+        applyLang('pt');
+
+        if (!isSmallScreen) {
+            openModal(cameraModal);
+        }
+
+        setTimeout(() => {
+            if (!loaderHidden) {
+                loaderHidden = true;
+                loader.classList.add('hidden');
+            }
+        }, 10000);
+    </script>
+</body>
+</html>
