@@ -1,0 +1,1305 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="icon" type="image/png" href="https://dididoingles.github.io/airpaint/faviair.png">
+    <link rel="apple-touch-icon" href="https://dididoingles.github.io/airpaint/faviair.png">
+
+    <meta name="description" content="Speak & Draw: desenhe no ar e fale a palavra em inglês para praticar vocabulário e pronúncia. Ferramenta gratuita do AirPaint para alunos da professora @dicarvalho.prof.">
+    <meta name="theme-color" content="#c20000">
+
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="AirPaint — Speak & Draw">
+    <meta property="og:description" content="Desenhe no ar e fale a palavra em inglês.">
+    <meta property="og:image" content="https://dididoingles.github.io/airpaint/metaair.png">
+    <meta property="og:url" content="https://dididoingles.github.io/airpaint/pages/speak/">
+    <meta property="og:site_name" content="AirPaint">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="AirPaint — Speak & Draw">
+    <meta name="twitter:description" content="Desenhe no ar e fale a palavra em inglês.">
+    <meta name="twitter:image" content="https://dididoingles.github.io/airpaint/metaair.png">
+
+    <title>AirPaint — Speak & Draw</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Gochi+Hand&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer">
+
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --ink: #222222;
+            --paper: #ffffff;
+            --accent: #c20000;
+            --accent-dark: #a30000;
+            --muted: #666666;
+            --shadow-hard-sm: 2px 3px 0 rgba(34, 34, 34, 0.85);
+            --shadow-hard: 3px 4px 0 rgba(34, 34, 34, 0.88);
+            --green: #1a8f4c;
+            --red: #c20000;
+        }
+
+        html, body { width: 100%; height: 100%; overflow: hidden; }
+
+        body {
+            background-color: var(--paper);
+            font-family: 'Poppins', sans-serif;
+            letter-spacing: -0.05em;
+            color: var(--ink);
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .topbar {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 12px 16px;
+            z-index: 30;
+            background: rgba(255,255,255,0.86);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border-bottom: 1px solid rgba(34,34,34,0.06);
+            gap: 8px;
+        }
+        .brand { display: flex; align-items: center; gap: 8px; }
+        .brand-title {
+            font-weight: 700; font-size: 20px; line-height: 1;
+            color: var(--accent); letter-spacing: -0.05em;
+        }
+        .brand-title span { color: var(--ink); }
+        .brand-badge {
+            font-family: 'Gochi Hand', cursive;
+            letter-spacing: normal; font-size: 12px;
+            color: var(--ink); background: #fff5f5;
+            border: 1.5px solid var(--accent);
+            border-radius: 20px; padding: 2px 8px;
+            transform: rotate(-3deg);
+        }
+        .topbar-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+
+        .mini-btn {
+            display: inline-flex; align-items: center; justify-content: center;
+            gap: 5px;
+            font-family: 'Gochi Hand', cursive;
+            letter-spacing: normal; font-size: 13px;
+            color: var(--ink); text-decoration: none;
+            background: var(--paper);
+            border: 1.5px solid var(--ink);
+            border-radius: 10px; padding: 6px 10px;
+            cursor: pointer; box-shadow: var(--shadow-hard-sm);
+            transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.2s ease;
+            min-height: 36px;
+        }
+        .mini-btn:hover {
+            background: #fff5f5;
+            transform: translate(1px, 1px);
+            box-shadow: 1px 2px 0 rgba(34,34,34,0.85);
+        }
+        .mini-btn:active {
+            transform: translate(3px, 3px);
+            box-shadow: 0 0 0 rgba(34,34,34,0.85);
+        }
+        .mini-btn i { font-size: 12px; }
+
+        #stage {
+            position: fixed;
+            top: 56px; left: 0; right: 0; bottom: 0;
+            z-index: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            gap: 12px;
+            padding: 12px 16px 88px;
+            overflow-y: auto;
+        }
+
+        .game-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 14px;
+            width: 100%;
+            max-width: 620px;
+        }
+
+        .camera-col { display: flex; flex-direction: column; gap: 10px; align-items: stretch; }
+        .info-col { display: flex; flex-direction: column; gap: 12px; }
+
+        .game-hud {
+            display: flex; align-items: center; justify-content: space-between;
+            gap: 10px; flex-wrap: wrap;
+        }
+        .hud-group { display: flex; align-items: center; gap: 8px; }
+        .hud-chip {
+            display: inline-flex; align-items: center; gap: 6px;
+            background: #fff;
+            border: 1.5px solid var(--ink);
+            border-radius: 10px;
+            padding: 6px 12px;
+            font-family: 'Gochi Hand', cursive;
+            letter-spacing: normal; font-size: 14px;
+            color: var(--ink);
+            box-shadow: var(--shadow-hard-sm);
+            white-space: nowrap;
+        }
+        .hud-chip i { font-size: 13px; color: var(--accent); }
+        .hud-chip .attempts i { color: var(--accent); }
+        .hud-chip .attempts i.lost { color: rgba(34,34,34,0.2); }
+
+        .canvas-stage {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 16 / 10;
+            max-height: 40vh;
+            border-radius: 20px;
+            background: #111;
+            overflow: hidden;
+            box-shadow: var(--shadow-hard);
+            border: 3px solid var(--ink);
+            isolation: isolate;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+        .canvas-stage video {
+            position: absolute; inset: 0;
+            width: 100%; height: 100%;
+            object-fit: cover;
+            transform: scaleX(-1);
+            display: block;
+            z-index: 1;
+        }
+        #paintCanvas {
+            position: absolute; inset: 0;
+            width: 100%; height: 100%;
+            z-index: 2;
+            touch-action: none;
+            cursor: default;
+        }
+        .canvas-overlay {
+            position: absolute; inset: 0;
+            pointer-events: none;
+            z-index: 3;
+            background-image:
+                linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px);
+            background-size: 24px 24px;
+            mix-blend-mode: screen;
+            opacity: 0.6;
+        }
+        .canvas-stage.drawing { border-color: var(--accent); }
+        .canvas-stage.correct { border-color: var(--green); box-shadow: 0 0 0 3px var(--green), var(--shadow-hard); }
+        .canvas-stage.wrong { border-color: var(--red); box-shadow: 0 0 0 3px var(--red), var(--shadow-hard); }
+
+        .speak-overlay {
+            position: absolute; inset: 0;
+            display: flex; align-items: center; justify-content: center;
+            z-index: 4; opacity: 0; pointer-events: none;
+            transition: opacity 0.2s ease;
+            font-family: 'Gochi Hand', cursive;
+            letter-spacing: normal;
+            font-size: clamp(24px, 5vw, 38px);
+            color: #fff;
+            text-shadow: 0 4px 12px rgba(0,0,0,0.5);
+            background: rgba(10,10,10,0.45);
+            text-align: center;
+            padding: 16px;
+        }
+        .speak-overlay.show { opacity: 1; }
+        .speak-overlay.correct { background: rgba(26, 143, 76, 0.45); }
+        .speak-overlay.wrong { background: rgba(194, 0, 0, 0.45); }
+        .speak-overlay.listening { background: rgba(194, 0, 0, 0.35); }
+
+        .target-card {
+            width: 100%;
+            background: #fff5f5;
+            border: 2px dashed var(--accent);
+            border-radius: 16px;
+            padding: 18px 20px;
+            box-shadow: var(--shadow-hard-sm);
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            align-items: center;
+            justify-content: center;
+        }
+        .target-kicker {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.24em;
+            color: var(--accent);
+            font-weight: 600;
+        }
+        .target-word {
+            font-family: 'Gochi Hand', cursive;
+            letter-spacing: normal;
+            font-weight: 400;
+            font-size: clamp(28px, 5.5vw, 42px);
+            line-height: 1.1;
+            color: var(--ink);
+        }
+        .target-translation {
+            font-size: 12px;
+            color: var(--muted);
+            letter-spacing: -0.02em;
+            font-style: italic;
+        }
+        .target-translation:empty { display: none; }
+
+        .status-text {
+            font-family: 'Gochi Hand', cursive;
+            letter-spacing: normal;
+            font-size: 15px;
+            color: var(--muted);
+            text-align: center;
+            min-height: 20px;
+        }
+        .status-text.listening { color: var(--accent); }
+        .status-text.correct { color: var(--green); }
+        .status-text.wrong { color: var(--red); }
+
+        .action-bar {
+            display: flex; gap: 10px; flex-wrap: wrap;
+        }
+        .action-btn {
+            flex: 1 1 auto;
+            display: inline-flex; align-items: center; justify-content: center;
+            gap: 8px;
+            font-family: 'Gochi Hand', cursive;
+            letter-spacing: normal; font-size: 16px;
+            padding: 0 18px; height: 50px;
+            border-radius: 10px;
+            border: 2px solid var(--ink);
+            cursor: pointer;
+            background: var(--paper); color: var(--ink);
+            text-decoration: none;
+            box-shadow: var(--shadow-hard-sm);
+            transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.2s ease;
+            min-height: 50px; white-space: nowrap;
+        }
+        .action-btn:hover {
+            background: #fff5f5;
+            transform: translate(1px, 1px);
+            box-shadow: 1px 2px 0 rgba(34,34,34,0.85);
+        }
+        .action-btn:active {
+            transform: translate(3px, 3px);
+            box-shadow: 0 0 0 rgba(34,34,34,0.85);
+        }
+        .action-btn.primary { background: var(--accent); color: #fff; }
+        .action-btn.primary:hover { background: var(--accent-dark); }
+        .action-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+        .action-btn.small { flex: 0 0 auto; font-size: 14px; height: 44px; min-height: 44px; padding: 0 14px; }
+
+        .gameover-card {
+            display: none;
+            width: 100%;
+            background: #fff;
+            border: 2px solid var(--ink);
+            border-radius: 18px;
+            box-shadow: var(--shadow-hard);
+            padding: 24px 20px;
+            text-align: center;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+        }
+        .gameover-card.show { display: flex; }
+        .gameover-card h2 {
+            font-family: 'Gochi Hand', cursive;
+            letter-spacing: normal; font-weight: 400;
+            font-size: 28px; color: var(--ink);
+        }
+        .gameover-score {
+            font-size: 42px; font-weight: 700;
+            letter-spacing: -0.05em; color: var(--accent); line-height: 1;
+        }
+        .gameover-label {
+            font-size: 12px; color: var(--muted);
+            text-transform: uppercase; letter-spacing: 0.14em;
+            font-weight: 600; margin-bottom: 4px;
+        }
+
+        .modal-backdrop {
+            position: fixed; inset: 0;
+            background: rgba(20, 20, 20, 0.55);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            z-index: 100;
+            display: flex; align-items: center; justify-content: center;
+            padding: 20px;
+            opacity: 0; visibility: hidden;
+            transition: opacity 0.25s ease, visibility 0.25s ease;
+        }
+        .modal-backdrop.open { opacity: 1; visibility: visible; }
+        .modal {
+            background: var(--paper);
+            border: 2px solid var(--ink);
+            border-radius: 18px;
+            box-shadow: var(--shadow-hard);
+            width: 100%; max-width: 440px;
+            padding: 24px 22px 20px;
+            transform: translateY(12px) scale(0.98);
+            transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+            max-height: 88vh; overflow-y: auto;
+        }
+        .modal-backdrop.open .modal { transform: translateY(0) scale(1); }
+        .modal-icon {
+            width: 44px; height: 44px;
+            border-radius: 12px; background: #fff5f5;
+            border: 1.5px solid var(--accent); color: var(--accent);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 18px; margin-bottom: 14px;
+        }
+        .modal h2 {
+            font-size: 20px; font-weight: 700;
+            letter-spacing: -0.04em; margin-bottom: 6px;
+        }
+        .modal p {
+            font-size: 13.5px; line-height: 1.5; color: #444;
+            margin-bottom: 16px; letter-spacing: -0.02em;
+        }
+        .modal ul {
+            list-style: none; display: flex; flex-direction: column;
+            gap: 10px; margin-bottom: 20px;
+        }
+        .modal ul li {
+            display: flex; align-items: flex-start; gap: 10px;
+            font-size: 13px; color: #333; line-height: 1.45;
+            letter-spacing: -0.02em;
+        }
+        .modal ul li i {
+            color: var(--accent); font-size: 13px;
+            margin-top: 3px; flex-shrink: 0; width: 16px; text-align: center;
+        }
+        .modal-actions {
+            display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap;
+        }
+        .btn-primary, .btn-ghost {
+            display: inline-flex; align-items: center; justify-content: center;
+            gap: 6px;
+            font-family: 'Gochi Hand', cursive;
+            letter-spacing: normal; font-size: 15px;
+            padding: 0 18px; height: 42px;
+            border-radius: 10px; cursor: pointer;
+            border: 2px solid var(--ink);
+            text-decoration: none; min-height: 42px;
+        }
+        .btn-primary {
+            background: var(--accent); color: #fff;
+            box-shadow: var(--shadow-hard-sm);
+            transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.2s ease;
+        }
+        .btn-primary:hover {
+            background: var(--accent-dark);
+            transform: translate(1px, 1px);
+            box-shadow: 1px 2px 0 rgba(34,34,34,0.85);
+        }
+        .btn-primary:active {
+            transform: translate(3px, 3px);
+            box-shadow: 0 0 0 rgba(34,34,34,0.85);
+        }
+        .btn-ghost {
+            background: var(--paper); color: var(--ink);
+            transition: background 0.2s ease;
+        }
+        .btn-ghost:hover { background: #fff5f5; }
+
+        #mobileWarningModal { display: none; }
+        @media (max-width: 899px) { #mobileWarningModal { display: flex; } }
+
+        .mobile-warning-art {
+            display: flex; align-items: center; justify-content: center;
+            margin: 4px auto 14px;
+            width: 140px; height: 140px;
+            background: #fff5f5;
+            border: 2px dashed rgba(194, 0, 0, 0.35);
+            border-radius: 50%; overflow: hidden; position: relative;
+        }
+        .mobile-warning-art img { width: 100%; height: 100%; object-fit: contain; display: block; }
+        .mobile-warning-art .fallback { font-size: 64px; line-height: 1; }
+        .mobile-warning-title {
+            text-align: center;
+            font-family: 'Gochi Hand', cursive;
+            letter-spacing: normal; font-weight: 400;
+            font-size: 24px; color: var(--ink); margin-bottom: 6px;
+        }
+        .mobile-warning-title .accent { color: var(--accent); }
+        .mobile-warning-text {
+            text-align: center; font-size: 13.5px; line-height: 1.55;
+            color: #555; margin-bottom: 18px; letter-spacing: -0.02em;
+        }
+        .mobile-warning .modal-actions { justify-content: center; }
+        .mobile-warning .modal-actions .btn-primary { flex: 1 1 100%; max-width: 280px; }
+
+        #toastContainer {
+            position: fixed; top: 64px; right: 12px;
+            z-index: 60;
+            display: flex; flex-direction: column; gap: 8px;
+            pointer-events: none;
+        }
+        .toast {
+            background: #fff;
+            border: 1.5px solid rgba(34,34,34,0.10);
+            border-left: 4px solid var(--accent);
+            color: var(--ink);
+            padding: 10px 14px;
+            border-radius: 0 10px 10px 0;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.10);
+            font-size: 12px; font-weight: 500;
+            display: flex; align-items: center; gap: 8px;
+            animation: toastIn 0.3s cubic-bezier(0.16,1,0.3,1) forwards;
+            max-width: 260px;
+        }
+        .toast i { color: var(--accent); font-size: 13px; }
+        @keyframes toastIn {
+            from { transform: translateX(120%); opacity: 0; }
+            to   { transform: translateX(0);    opacity: 1; }
+        }
+        @keyframes toastOut {
+            from { transform: translateX(0);    opacity: 1; }
+            to   { transform: translateX(120%); opacity: 0; }
+        }
+
+        #loader {
+            position: fixed; inset: 0;
+            background: var(--paper);
+            z-index: 9999;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            gap: 18px;
+            transition: opacity 0.5s ease, visibility 0.5s;
+        }
+        #loader.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+        .spinner {
+            width: 40px; height: 40px; border-radius: 50%;
+            border: 3px solid rgba(194,0,0,0.15);
+            border-top-color: var(--accent);
+            animation: spin 0.9s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        #loader p {
+            font-family: 'Gochi Hand', cursive;
+            letter-spacing: normal; font-size: 17px;
+            color: var(--ink); opacity: 0.75;
+            text-align: center; padding: 0 24px;
+        }
+
+        .site-footer {
+            position: fixed;
+            bottom: 4px; left: 50%;
+            transform: translateX(-50%);
+            z-index: 30;
+            font-size: 10px;
+            color: var(--muted);
+            text-align: center;
+            background: rgba(255,255,255,0.86);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            padding: 3px 12px;
+            border-radius: 20px;
+            border: 1px solid rgba(34,34,34,0.08);
+            white-space: nowrap;
+        }
+        .site-footer a { color: var(--accent); text-decoration: none; font-weight: 600; }
+        .site-footer a:hover { text-decoration: underline; }
+
+        @media (min-width: 768px) {
+            .topbar { padding: 14px 24px; }
+            .brand-title { font-size: 22px; }
+            .mini-btn { min-height: 40px; font-size: 14px; padding: 7px 12px; }
+
+            #stage { top: 64px; padding: 16px 24px 24px; }
+
+            .game-grid {
+                grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+                gap: 20px;
+                max-width: 1100px;
+                align-items: start;
+            }
+
+            .canvas-stage { max-height: 44vh; }
+            .target-card { padding: 26px 24px; }
+            .target-word { font-size: clamp(32px, 3.6vw, 44px); }
+
+            .site-footer { font-size: 11px; padding: 4px 16px; }
+        }
+
+        @media (min-width: 1024px) {
+            .topbar { padding: 16px 60px; }
+            .brand-title { font-size: 26px; }
+            .brand-badge { font-size: 13px; }
+
+            #stage { padding: 20px 60px 24px; }
+
+            .game-grid {
+                grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+                gap: 24px;
+                max-width: 1200px;
+            }
+
+            .canvas-stage { max-height: 48vh; }
+            .target-word { font-size: 48px; }
+            .target-card { padding: 34px 28px; }
+
+            .site-footer { font-size: 12px; bottom: 8px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="loader" class="hidden" aria-hidden="true">
+        <div class="spinner"></div>
+        <p id="loaderText">Preparando a câmera…</p>
+    </div>
+
+    <div id="toastContainer"></div>
+
+    <header class="topbar">
+        <div class="brand">
+            <span class="brand-title">Air<span>Paint</span></span>
+            <span class="brand-badge">speak</span>
+        </div>
+        <div class="topbar-actions">
+            <button class="mini-btn" id="langToggle" type="button" aria-label="Alternar idioma">
+                <i class="fa-solid fa-globe"></i>
+                <span id="langLabel">EN</span>
+            </button>
+            <button class="mini-btn" id="tutorialBtn" type="button">
+                <i class="fa-solid fa-circle-question"></i>
+                <span data-i18n="tutorial">Tutorial</span>
+            </button>
+            <a class="mini-btn" href="https://dididoingles.github.io/airpaint/">
+                <i class="fa-solid fa-arrow-left"></i>
+                <span data-i18n="back">Hub</span>
+            </a>
+        </div>
+    </header>
+
+    <div id="stage">
+        <div class="game-grid">
+            <div class="camera-col">
+                <div class="game-hud">
+                    <div class="hud-group">
+                        <div class="hud-chip">
+                            <i class="fa-solid fa-star"></i>
+                            <span id="scoreValue">0</span>
+                        </div>
+                    </div>
+                    <div class="hud-group">
+                        <div class="hud-chip attempts" id="attemptsChip">
+                            <i class="fa-solid fa-microphone" data-attempt="1"></i>
+                            <i class="fa-solid fa-microphone" data-attempt="2"></i>
+                            <i class="fa-solid fa-microphone" data-attempt="3"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="canvas-stage" id="canvasStage">
+                    <video id="webcam" autoplay playsinline muted></video>
+                    <canvas id="paintCanvas"></canvas>
+                    <div class="canvas-overlay"></div>
+                    <div class="speak-overlay" id="speakOverlay"></div>
+                </div>
+
+                <div class="status-text" id="statusText" data-i18n="statusDraw">Desenhe a palavra com o dedo indicador</div>
+
+                <div class="action-bar">
+                    <button class="action-btn primary" id="speakBtn" type="button">
+                        <i class="fa-solid fa-microphone"></i>
+                        <span data-i18n="speakBtn">Falar</span>
+                    </button>
+                    <button class="action-btn" id="clearBtn" type="button">
+                        <i class="fa-solid fa-eraser"></i>
+                        <span data-i18n="clearBtn">Limpar</span>
+                    </button>
+                    <button class="action-btn small" id="skipBtn" type="button">
+                        <i class="fa-solid fa-forward"></i>
+                        <span data-i18n="skipBtn">Pular</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="info-col">
+                <div class="target-card" id="targetCard">
+                    <div class="target-kicker" data-i18n="targetKicker">Desenhe e fale</div>
+                    <div class="target-word" id="targetWord">elephant</div>
+                    <div class="target-translation" id="targetTranslation">elefante</div>
+                </div>
+
+                <div class="gameover-card" id="gameoverCard">
+                    <h2 data-i18n="gameoverTitle">Fim de jogo!</h2>
+                    <div>
+                        <div class="gameover-label" data-i18n="gameoverScoreLabel">Sua pontuação</div>
+                        <div class="gameover-score" id="finalScore">0</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="site-footer">
+        Desenvolvido pela professora
+        <a href="https://www.instagram.com/dicarvalho.prof/" target="_blank" rel="noopener noreferrer">@dicarvalho.prof</a>
+    </footer>
+
+    <div class="modal-backdrop open" id="mobileWarningModal" role="dialog" aria-modal="true" aria-labelledby="mobileWarningTitle">
+        <div class="modal mobile-warning">
+            <div class="mobile-warning-art" id="mobileWarningArt">
+                <img src="https://dididoingles.github.io/airpaint/assets/triste.webp" alt="" onerror="this.style.display='none'; this.parentNode.querySelector('.fallback').style.display='block';">
+                <span class="fallback" style="display:none;"><i class="fa-regular fa-face-sad-tear" style="color:var(--accent);"></i></span>
+            </div>
+            <h2 class="mobile-warning-title" id="mobileWarningTitle" data-i18n="mobileTitle">Ops, o celular <span class="accent">não dá conta</span>…</h2>
+            <p class="mobile-warning-text" data-i18n="mobileBody">O AirPaint usa bastante memória para reconhecer os gestos. No celular ele pode travar ou ficar lento. Abra no computador para a experiência completa.</p>
+            <div class="modal-actions">
+                <a class="btn-primary" href="https://dididoingles.github.io/airpaint/">
+                    <i class="fa-solid fa-arrow-left"></i>
+                    <span data-i18n="mobileBack">Voltar ao hub</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-backdrop" id="cameraModal" role="dialog" aria-modal="true" aria-labelledby="cameraModalTitle">
+        <div class="modal">
+            <div class="modal-icon"><i class="fa-solid fa-camera"></i></div>
+            <h2 id="cameraModalTitle" data-i18n="camTitle">Permitir acesso à câmera?</h2>
+            <p data-i18n="camBody">Para desenhar com gestos, o AirPaint precisa acessar sua webcam. O vídeo é processado no seu navegador e não é enviado para nenhum servidor.</p>
+            <ul>
+                <li><i class="fa-solid fa-hand-pointer"></i><span data-i18n="camTip1">Levante o dedo indicador para desenhar.</span></li>
+                <li><i class="fa-solid fa-hand-fist"></i><span data-i18n="camTip2">Feche o punho para parar de desenhar.</span></li>
+                <li><i class="fa-solid fa-microphone"></i><span data-i18n="camTip3">Depois, clique em "Falar" e diga a palavra.</span></li>
+            </ul>
+            <div class="modal-actions">
+                <button class="btn-ghost" id="cameraCancel" type="button" data-i18n="camCancel">Agora não</button>
+                <button class="btn-primary" id="cameraAllow" type="button">
+                    <i class="fa-solid fa-video"></i>
+                    <span data-i18n="camAllow">Permitir câmera</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-backdrop" id="tutorialModal" role="dialog" aria-modal="true" aria-labelledby="tutorialModalTitle">
+        <div class="modal">
+            <div class="modal-icon"><i class="fa-solid fa-graduation-cap"></i></div>
+            <h2 id="tutorialModalTitle" data-i18n="tutTitle">Como usar o Speak & Draw</h2>
+            <p data-i18n="tutBody">Você vê uma palavra em inglês, desenha no ar e depois fala a palavra em voz alta para praticar a pronúncia. Cada acerto vale 1 ponto. Você tem 3 tentativas de fala por palavra.</p>
+            <p data-i18n="tutLangNote" style="font-style:italic; color:var(--accent); font-size:12.5px;">A palavra aparece sempre em inglês. A tradução abaixo é só um apoio.</p>
+            <ul>
+                <li><i class="fa-solid fa-hand-pointer"></i><span data-i18n="tutDraw">Levante o dedo indicador para desenhar a palavra no ar.</span></li>
+                <li><i class="fa-solid fa-hand-fist"></i><span data-i18n="tutStop">Feche o punho para parar de desenhar.</span></li>
+                <li><i class="fa-solid fa-microphone"></i><span data-i18n="tutSpeak">Clique em "Falar" e diga a palavra em inglês.</span></li>
+                <li><i class="fa-solid fa-rotate-right"></i><span data-i18n="tutRetry">Se errar, tente de novo. São 3 tentativas por palavra.</span></li>
+            </ul>
+            <div class="modal-actions">
+                <button class="btn-primary" id="tutorialClose" type="button">
+                    <i class="fa-solid fa-check"></i>
+                    <span data-i18n="tutClose">Entendi</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const isSmallScreen = window.matchMedia('(max-width: 899px)').matches;
+        const mobileWarningModal = document.getElementById('mobileWarningModal');
+
+        if (isSmallScreen) {
+            const observer = new MutationObserver(() => {
+                if (!mobileWarningModal.classList.contains('open')) {
+                    mobileWarningModal.classList.add('open');
+                }
+            });
+            observer.observe(mobileWarningModal, { attributes: true, attributeFilter: ['class'] });
+        }
+
+        const I18N = {
+            pt: {
+                tutorial: 'Tutorial', back: 'Hub',
+                targetKicker: 'Desenhe e fale',
+                speakBtn: 'Falar', clearBtn: 'Limpar', skipBtn: 'Pular',
+                gameoverTitle: 'Fim de jogo!', gameoverScoreLabel: 'Sua pontuação',
+                statusDraw: 'Desenhe a palavra com o dedo indicador',
+                statusListening: 'Ouvindo…',
+                statusCorrect: 'Isso! Você acertou!',
+                statusWrong: 'Quase! Tente de novo.',
+                statusNoSpeech: 'Não entendi. Tente de novo.',
+                statusSpeechUnsupported: 'Reconhecimento de voz indisponível. Use o botão Pular.',
+                statusNoAttempts: 'Sem tentativas. Pule para a próxima.',
+                loading: 'Preparando a câmera…',
+                cameraError: 'Permissão da câmera negada ou não encontrada.',
+                camTitle: 'Permitir acesso à câmera?',
+                camBody: 'Para desenhar com gestos, o AirPaint precisa acessar sua webcam. O vídeo é processado no seu navegador e não é enviado para nenhum servidor.',
+                camTip1: 'Levante o dedo indicador para desenhar.',
+                camTip2: 'Feche o punho para parar de desenhar.',
+                camTip3: 'Depois, clique em "Falar" e diga a palavra.',
+                camAllow: 'Permitir câmera', camCancel: 'Agora não',
+                tutTitle: 'Como usar o Speak & Draw',
+                tutBody: 'Você vê uma palavra em inglês, desenha no ar e depois fala a palavra em voz alta para praticar a pronúncia. Cada acerto vale 1 ponto. Você tem 3 tentativas de fala por palavra.',
+                tutLangNote: 'A palavra aparece sempre em inglês. A tradução abaixo é só um apoio.',
+                tutDraw: 'Levante o dedo indicador para desenhar a palavra no ar.',
+                tutStop: 'Feche o punho para parar de desenhar.',
+                tutSpeak: 'Clique em "Falar" e diga a palavra em inglês.',
+                tutRetry: 'Se errar, tente de novo. São 3 tentativas por palavra.',
+                tutClose: 'Entendi',
+                mobileTitle: 'Ops, o celular não dá conta…',
+                mobileBody: 'O AirPaint usa bastante memória para reconhecer os gestos. No celular ele pode travar ou ficar lento. Abra no computador para a experiência completa.',
+                mobileBack: 'Voltar ao hub',
+                lang: 'PT'
+            },
+            en: {
+                tutorial: 'Tutorial', back: 'Hub',
+                targetKicker: 'Draw and speak',
+                speakBtn: 'Speak', clearBtn: 'Clear', skipBtn: 'Skip',
+                gameoverTitle: 'Game over!', gameoverScoreLabel: 'Your score',
+                statusDraw: 'Draw the word with your index finger',
+                statusListening: 'Listening…',
+                statusCorrect: 'Yes! You got it!',
+                statusWrong: 'Almost! Try again.',
+                statusNoSpeech: 'I didn’t catch that. Try again.',
+                statusSpeechUnsupported: 'Speech recognition unavailable. Use the Skip button.',
+                statusNoAttempts: 'No attempts left. Skip to the next word.',
+                loading: 'Preparing the camera…',
+                cameraError: 'Camera permission denied or not found.',
+                camTitle: 'Allow camera access?',
+                camBody: 'To draw with gestures, AirPaint needs access to your webcam. The video is processed in your browser and is not sent to any server.',
+                camTip1: 'Raise your index finger to draw.',
+                camTip2: 'Close your fist to stop drawing.',
+                camTip3: 'Then click "Speak" and say the word.',
+                camAllow: 'Allow camera', camCancel: 'Not now',
+                tutTitle: 'How to use Speak & Draw',
+                tutBody: 'You see a word in English, draw it in the air, and then say the word out loud to practise pronunciation. Each correct word scores 1 point. You have 3 speech attempts per word.',
+                tutLangNote: '',
+                tutDraw: 'Raise your index finger to draw the word in the air.',
+                tutStop: 'Close your fist to stop drawing.',
+                tutSpeak: 'Click "Speak" and say the word in English.',
+                tutRetry: 'If you miss, try again. You have 3 attempts per word.',
+                tutClose: 'Got it',
+                mobileTitle: 'Oops, phones can’t quite handle it…',
+                mobileBody: 'AirPaint uses a lot of memory to recognise gestures. On a phone it may freeze or get slow. Open it on a computer for the full experience.',
+                mobileBack: 'Back to hub',
+                lang: 'EN'
+            }
+        };
+        let currentLang = 'pt';
+        function t(key) { return (I18N[currentLang] && I18N[currentLang][key]) || key; }
+
+        function applyLang(lang) {
+            currentLang = lang;
+            document.documentElement.lang = lang === 'pt' ? 'pt-BR' : 'en';
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                el.textContent = t(key);
+            });
+            const label = document.getElementById('langLabel');
+            if (label) label.textContent = I18N[lang].lang;
+            if (loaderText && loader && !loader.classList.contains('hidden')) {
+                loaderText.textContent = t('loading');
+            }
+            if (currentWord) {
+                targetTranslation.textContent = currentLang === 'pt' ? currentWord.pt : '';
+            }
+            if (gameState === 'draw') {
+                setStatus(t('statusDraw'), '');
+            }
+        }
+
+        const video = document.getElementById('webcam');
+        const paintCanvas = document.getElementById('paintCanvas');
+        const canvasStage = document.getElementById('canvasStage');
+        const speakOverlay = document.getElementById('speakOverlay');
+        const statusText = document.getElementById('statusText');
+        const targetCard = document.getElementById('targetCard');
+        const targetWord = document.getElementById('targetWord');
+        const targetTranslation = document.getElementById('targetTranslation');
+        const gameoverCard = document.getElementById('gameoverCard');
+        const finalScore = document.getElementById('finalScore');
+        const scoreValue = document.getElementById('scoreValue');
+        const attemptsChip = document.getElementById('attemptsChip');
+        const speakBtn = document.getElementById('speakBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const skipBtn = document.getElementById('skipBtn');
+        const loader = document.getElementById('loader');
+        const loaderText = document.getElementById('loaderText');
+        const toastContainer = document.getElementById('toastContainer');
+
+        const langToggle = document.getElementById('langToggle');
+        const tutorialBtn = document.getElementById('tutorialBtn');
+        const tutorialModal = document.getElementById('tutorialModal');
+        const tutorialClose = document.getElementById('tutorialClose');
+        const cameraModal = document.getElementById('cameraModal');
+        const cameraAllow = document.getElementById('cameraAllow');
+        const cameraCancel = document.getElementById('cameraCancel');
+
+        const WORDS = [
+            { en: 'elephant',    pt: 'elefante' },
+            { en: 'house',       pt: 'casa' },
+            { en: 'sun',         pt: 'sol' },
+            { en: 'tree',        pt: 'árvore' },
+            { en: 'car',         pt: 'carro' },
+            { en: 'dog',         pt: 'cachorro' },
+            { en: 'cat',         pt: 'gato' },
+            { en: 'flower',      pt: 'flor' },
+            { en: 'mountain',    pt: 'montanha' },
+            { en: 'river',       pt: 'rio' },
+            { en: 'bird',        pt: 'pássaro' },
+            { en: 'fish',        pt: 'peixe' },
+            { en: 'apple',       pt: 'maçã' },
+            { en: 'banana',      pt: 'banana' },
+            { en: 'book',        pt: 'livro' },
+            { en: 'chair',       pt: 'cadeira' },
+            { en: 'table',       pt: 'mesa' },
+            { en: 'window',      pt: 'janela' },
+            { en: 'door',        pt: 'porta' },
+            { en: 'clock',       pt: 'relógio' },
+            { en: 'umbrella',    pt: 'guarda-chuva' },
+            { en: 'bicycle',     pt: 'bicicleta' },
+            { en: 'airplane',    pt: 'avião' },
+            { en: 'boat',        pt: 'barco' },
+            { en: 'train',       pt: 'trem' },
+            { en: 'balloon',     pt: 'balão' },
+            { en: 'camera',      pt: 'câmera' },
+            { en: 'pencil',      pt: 'lápis' },
+            { en: 'phone',       pt: 'telefone' },
+            { en: 'shoe',        pt: 'sapato' }
+        ];
+
+        const MAX_ATTEMPTS = 3;
+        let currentWord = null;
+        let score = 0;
+        let attemptsLeft = MAX_ATTEMPTS;
+        let gameState = 'draw';
+        let usedWordIndices = new Set();
+
+        const ctx = paintCanvas.getContext('2d');
+        let currentColor = '#c20000';
+        let currentThickness = 8;
+
+        function resizeCanvas() {
+            const rect = canvasStage.getBoundingClientRect();
+            const dpr = Math.max(1, Math.min(window.devicePixelRatio || 1, 2));
+            const prev = document.createElement('canvas');
+            prev.width = paintCanvas.width;
+            prev.height = paintCanvas.height;
+            prev.getContext('2d').drawImage(paintCanvas, 0, 0);
+
+            paintCanvas.width = Math.floor(rect.width * dpr);
+            paintCanvas.height = Math.floor(rect.height * dpr);
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            if (prev.width && prev.height) {
+                ctx.drawImage(prev, 0, 0, prev.width, prev.height, 0, 0, rect.width, rect.height);
+            }
+        }
+        window.addEventListener('resize', resizeCanvas);
+
+        function clearCanvas() {
+            ctx.clearRect(0, 0, paintCanvas.width, paintCanvas.height);
+            // CORREÇÃO: reseta o ponto anterior para não criar linha fantasma
+            lastX = null;
+            lastY = null;
+        }
+
+        function showToast(message) {
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.innerHTML = `<i class="fa-solid fa-circle-info"></i><span>${message}</span>`;
+            toastContainer.appendChild(toast);
+            setTimeout(() => {
+                toast.style.animation = 'toastOut 0.3s cubic-bezier(0.16,1,0.3,1) forwards';
+                setTimeout(() => toast.remove(), 300);
+            }, 2400);
+        }
+
+        function openModal(el) { el.classList.add('open'); }
+        function closeModal(el) { el.classList.remove('open'); }
+
+        function setStatus(text, tone) {
+            statusText.textContent = text;
+            statusText.classList.remove('listening', 'correct', 'wrong');
+            if (tone) statusText.classList.add(tone);
+        }
+        function showOverlay(text, tone) {
+            speakOverlay.textContent = text;
+            speakOverlay.className = 'speak-overlay show ' + (tone || '');
+        }
+        function hideOverlay() {
+            speakOverlay.className = 'speak-overlay';
+        }
+
+        function updateScoreUI() { scoreValue.textContent = score; }
+        function updateAttemptsUI() {
+            const mics = attemptsChip.querySelectorAll('i');
+            mics.forEach((m, i) => m.classList.toggle('lost', i >= attemptsLeft));
+        }
+
+        function pickWord() {
+            const available = WORDS
+                .map((w, i) => ({ w, i }))
+                .filter(x => !usedWordIndices.has(x.i));
+
+            if (available.length === 0) {
+                endGame();
+                return;
+            }
+
+            const choice = available[Math.floor(Math.random() * available.length)];
+            usedWordIndices.add(choice.i);
+            currentWord = choice.w;
+
+            targetWord.textContent = currentWord.en;
+            targetTranslation.textContent = currentLang === 'pt' ? currentWord.pt : '';
+
+            attemptsLeft = MAX_ATTEMPTS;
+            updateAttemptsUI();
+            clearCanvas();
+            hideOverlay();
+            gameState = 'draw';
+            setStatus(t('statusDraw'), '');
+            speakBtn.disabled = false;
+        }
+
+        /* ============================================================
+           RECONHECIMENTO DE VOZ
+           Correção: flags para evitar duplo processamento e
+           reabilitar o botão Falar em todos os caminhos.
+           ============================================================ */
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        let speechSupported = !!SpeechRecognition;
+        let recognition = null;
+        let resultHandled = false;
+
+        if (speechSupported) {
+            recognition = new SpeechRecognition();
+            recognition.lang = 'en-US';
+            recognition.interimResults = false;
+            recognition.maxAlternatives = 3;
+            recognition.continuous = false;
+
+            recognition.onstart = () => {
+                resultHandled = false;
+            };
+
+            recognition.onresult = (event) => {
+                resultHandled = true;
+                const results = event.results[0];
+                const alternatives = [];
+                for (let i = 0; i < results.length; i++) {
+                    alternatives.push(results[i].transcript.trim().toLowerCase());
+                }
+                handleSpeechResult(alternatives);
+            };
+
+            recognition.onerror = (event) => {
+                console.warn('Speech error:', event.error);
+                if (resultHandled) return;
+                resultHandled = true;
+                if (event.error === 'no-speech' || event.error === 'audio-capture') {
+                    speechFailed(t('statusNoSpeech'));
+                } else if (event.error === 'not-allowed') {
+                    speechSupported = false;
+                    speechFailed(t('statusSpeechUnsupported'));
+                } else {
+                    speechFailed(t('statusNoSpeech'));
+                }
+            };
+
+            recognition.onend = () => {
+                if (resultHandled) return;
+                resultHandled = true;
+                if (gameState === 'listening') {
+                    speechFailed(t('statusNoSpeech'));
+                }
+            };
+        }
+
+        function normalize(str) {
+            return str
+                .toLowerCase()
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '')
+                .replace(/[^a-z0-9\s]/g, '')
+                .trim();
+        }
+
+        function handleSpeechResult(alternatives) {
+            if (gameState !== 'listening') return;
+            gameState = 'feedback';
+
+            const target = normalize(currentWord.en);
+            const heard = alternatives.map(normalize);
+
+            const exact = heard.some(h => h === target);
+            const partial = heard.some(h => h.includes(target) || target.includes(h));
+
+            if (exact || partial) {
+                score++;
+                updateScoreUI();
+                showOverlay(t('statusCorrect'), 'correct');
+                setStatus(t('statusCorrect'), 'correct');
+                canvasStage.classList.add('correct');
+
+                setTimeout(() => {
+                    canvasStage.classList.remove('correct');
+                    hideOverlay();
+                    pickWord();
+                }, 1600);
+            } else {
+                attemptsLeft--;
+                updateAttemptsUI();
+
+                if (attemptsLeft <= 0) {
+                    showOverlay(t('statusNoAttempts'), 'wrong');
+                    setStatus(t('statusNoAttempts'), 'wrong');
+                    canvasStage.classList.add('wrong');
+                    speakBtn.disabled = true;
+
+                    setTimeout(() => {
+                        canvasStage.classList.remove('wrong');
+                        hideOverlay();
+                        pickWord();
+                    }, 2000);
+                } else {
+                    showOverlay(t('statusWrong'), 'wrong');
+                    setStatus(t('statusWrong'), 'wrong');
+                    canvasStage.classList.add('wrong');
+
+                    setTimeout(() => {
+                        canvasStage.classList.remove('wrong');
+                        hideOverlay();
+                        gameState = 'draw';
+                        setStatus(t('statusDraw'), '');
+                        // CORREÇÃO: reabilita o botão para tentar de novo
+                        speakBtn.disabled = false;
+                    }, 1400);
+                }
+            }
+        }
+
+        function speechFailed(message) {
+            if (gameState !== 'listening') return;
+            gameState = 'feedback';
+
+            attemptsLeft--;
+            updateAttemptsUI();
+
+            showOverlay(message, 'wrong');
+            setStatus(message, 'wrong');
+            canvasStage.classList.add('wrong');
+
+            setTimeout(() => {
+                canvasStage.classList.remove('wrong');
+                hideOverlay();
+                if (attemptsLeft <= 0) {
+                    pickWord();
+                } else {
+                    gameState = 'draw';
+                    setStatus(t('statusDraw'), '');
+                    // CORREÇÃO: reabilita o botão para tentar de novo
+                    speakBtn.disabled = false;
+                }
+            }, 1600);
+        }
+
+        speakBtn.addEventListener('click', () => {
+            if (gameState !== 'draw') return;
+            if (!speechSupported) {
+                showToast(t('statusSpeechUnsupported'));
+                return;
+            }
+            gameState = 'listening';
+            showOverlay(t('statusListening'), 'listening');
+            setStatus(t('statusListening'), 'listening');
+            speakBtn.disabled = true;
+            resultHandled = false;
+
+            try {
+                recognition.start();
+            } catch (err) {
+                console.warn('recognition.start falhou:', err);
+                speechFailed(t('statusNoSpeech'));
+            }
+        });
+
+        clearBtn.addEventListener('click', () => {
+            clearCanvas();
+        });
+
+        skipBtn.addEventListener('click', () => {
+            if (gameState === 'listening') return;
+            pickWord();
+        });
+
+        function endGame() {
+            gameState = 'gameover';
+            gameoverCard.classList.add('show');
+            finalScore.textContent = score;
+            targetCard.style.display = 'none';
+            speakBtn.disabled = true;
+            clearBtn.disabled = true;
+            skipBtn.disabled = false;
+            setStatus('', '');
+
+            skipBtn.innerHTML = '<i class="fa-solid fa-rotate-right"></i><span>' + (currentLang === 'pt' ? 'Recomeçar' : 'Play again') + '</span>';
+            skipBtn.onclick = () => {
+                score = 0;
+                usedWordIndices.clear();
+                updateScoreUI();
+                gameoverCard.classList.remove('show');
+                targetCard.style.display = 'flex';
+                speakBtn.disabled = false;
+                clearBtn.disabled = false;
+                pickWord();
+            };
+        }
+
+        let hands = null;
+        let camera = null;
+        let cameraStarted = false;
+        let loaderHidden = true;
+        let lastX = null, lastY = null;
+
+        function onResults(results) {
+            if (!loaderHidden) {
+                loaderHidden = true;
+                loader.classList.add('hidden');
+            }
+
+            if (gameState === 'gameover') return;
+            if (!results.multiHandLandmarks || results.multiHandLandmarks.length === 0) {
+                lastX = lastY = null;
+                canvasStage.classList.remove('drawing');
+                return;
+            }
+
+            const lm = results.multiHandLandmarks[0];
+            const indexTip = lm[8], indexDip = lm[6];
+            const middleTip = lm[12], middleDip = lm[10];
+            const ringTip = lm[16], ringDip = lm[14];
+            const pinkyTip = lm[20], pinkyDip = lm[18];
+
+            const isIndex  = indexTip.y  < indexDip.y;
+            const isMiddle = middleTip.y < middleDip.y;
+            const isRing   = ringTip.y   < ringDip.y;
+            const isPinky  = pinkyTip.y  < pinkyDip.y;
+
+            if (isIndex && !isMiddle && !isRing && !isPinky && gameState === 'draw') {
+                canvasStage.classList.add('drawing');
+
+                const rect = canvasStage.getBoundingClientRect();
+                const screenX = (1 - indexTip.x) * rect.width;
+                const screenY = indexTip.y * rect.height;
+
+                if (lastX !== null && lastY !== null) {
+                    ctx.beginPath();
+                    ctx.moveTo(lastX, lastY);
+                    ctx.lineTo(screenX, screenY);
+                    ctx.strokeStyle = currentColor;
+                    ctx.lineWidth = currentThickness;
+                    ctx.lineCap = 'round';
+                    ctx.lineJoin = 'round';
+                    ctx.stroke();
+                }
+                lastX = screenX;
+                lastY = screenY;
+            } else {
+                lastX = lastY = null;
+                canvasStage.classList.remove('drawing');
+            }
+        }
+
+        function startCamera() {
+            if (cameraStarted) return;
+            cameraStarted = true;
+
+            loaderHidden = false;
+            loader.classList.remove('hidden');
+            loaderText.textContent = t('loading');
+
+            hands = new Hands({
+                locateFile: f => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${f}`
+            });
+            hands.setOptions({
+                maxNumHands: 1,
+                modelComplexity: 1,
+                minDetectionConfidence: 0.65,
+                minTrackingConfidence: 0.65
+            });
+            hands.onResults(onResults);
+
+            camera = new Camera(video, {
+                onFrame: async () => { await hands.send({ image: video }); },
+                width: 640,
+                height: 480
+            });
+
+            camera.start().catch(err => {
+                console.error('Erro ao abrir câmera:', err);
+                cameraStarted = false;
+                loaderHidden = true;
+                loader.classList.add('hidden');
+                showToast(t('cameraError'));
+            });
+
+            setTimeout(resizeCanvas, 300);
+        }
+
+        langToggle.addEventListener('click', () => {
+            applyLang(currentLang === 'pt' ? 'en' : 'pt');
+        });
+
+        tutorialBtn.addEventListener('click', () => openModal(tutorialModal));
+        tutorialClose.addEventListener('click', () => closeModal(tutorialModal));
+        tutorialModal.addEventListener('click', e => { if (e.target === tutorialModal) closeModal(tutorialModal); });
+
+        if (!isSmallScreen) {
+            cameraAllow.addEventListener('click', () => {
+                closeModal(cameraModal);
+                startCamera();
+                if (!currentWord) pickWord();
+            });
+            cameraCancel.addEventListener('click', () => {
+                closeModal(cameraModal);
+            });
+            cameraModal.addEventListener('click', e => {
+                if (e.target === cameraModal) closeModal(cameraModal);
+            });
+        }
+
+        applyLang('pt');
+        updateScoreUI();
+        updateAttemptsUI();
+        resizeCanvas();
+
+        if (!speechSupported) {
+            showToast(t('statusSpeechUnsupported'));
+        }
+
+        currentWord = WORDS[0];
+        targetWord.textContent = currentWord.en;
+        targetTranslation.textContent = currentWord.pt;
+        usedWordIndices.add(0);
+
+        if (!isSmallScreen) {
+            openModal(cameraModal);
+        }
+
+        setTimeout(() => {
+            if (!loaderHidden) {
+                loaderHidden = true;
+                loader.classList.add('hidden');
+            }
+        }, 10000);
+    </script>
+</body>
+</html>
