@@ -690,10 +690,7 @@
                     <i class="fa-solid fa-arrow-left"></i>
                     <span data-i18n="mobileBack">Voltar ao hub</span>
                 </a>
-                <button class="btn-primary" id="mobileContinue" type="button">
-                    <i class="fa-solid fa-forward"></i>
-                    <span data-i18n="mobileContinue">Continuar mesmo assim</span>
-                </button>
+               
             </div>
         </div>
     </div>
@@ -1196,12 +1193,7 @@
             openModal(cameraModal);
         }
 
-        // mobile: continuar mesmo assim -> fecha aviso e pede câmera
-        mobileContinue.addEventListener('click', () => {
-            closeModal(mobileWarningModal);
-            setInputMode('gestures');
-            openModal(cameraModal);
-        });
+       
 
         // fallback loader (só se ele estiver visível)
         setTimeout(() => {
